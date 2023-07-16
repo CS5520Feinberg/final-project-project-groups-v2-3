@@ -24,11 +24,11 @@
 <!--        <item name="colorAccent">#FFEB3B</item>-->
 <!--        <item name="android:windowBackground">@color/white</item>-->
 <!--        <item name="android:textColorPrimary">@color/black</item>-->
-        <item name="colorPrimary">#E45537</item>
+        <item name="colorPrimary">#FDFD1F6A</item>
         <item name="colorPrimaryDark">@color/black</item>
-        <item name="colorAccent">#59392e</item>
-        <item name="android:windowBackground">#b2beb5</item>
-        <item name="android:textColorPrimary">@color/off_white</item>
+        <item name="colorAccent">#d1cfe2</item>
+        <item name="android:windowBackground">#7ec4cf</item>
+        <item name="android:textColorPrimary">#00e0da</item>
 
     </style>
 

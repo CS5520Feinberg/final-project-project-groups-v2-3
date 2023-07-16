@@ -6,29 +6,42 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/textView3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello!"
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/password_edit_text"
+        android:layout_width="231dp"
+        android:layout_height="45dp"
+        android:hint="Enter password"
+        android:inputType="textPassword"
+        android:textColor="#EFE9E9"
+        android:textColorHighlight="@color/white"
+        android:textColorLink="@color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.288" />
+
+    <com.google.android.material.textfield.TextInputEditText
+        android:id="@+id/username_edit_text"
+        android:layout_width="236dp"
+        android:layout_height="57dp"
+        android:hint="Enter Name"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.514"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.195" />
 
     <Button
-        android:id="@+id/elevatedButton"
-        style="@style/Widget.Material3.Button.ElevatedButton"
-        android:layout_width="195dp"
-        android:layout_height="79dp"
-        android:layout_marginStart="131dp"
-        android:layout_marginTop="185dp"
-        android:layout_marginEnd="132dp"
-        android:layout_marginBottom="123dp"
-        android:text="Elevated button"
-        android:textSize="20sp"
-        app:layout_constraintBottom_toTopOf="@+id/textView3"
+        android:id="@+id/login_button"
+        android:layout_width="184dp"
+        android:layout_height="48dp"
+        android:text="Login"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.401" />
 </androidx.constraintlayout.widget.ConstraintLayout>
