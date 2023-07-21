@@ -8,7 +8,7 @@
     tools:context=".MainActivity">
 
     <!-- Your other views here -->
-
+    <include layout="@layout/toolbar_layout" />
     <FrameLayout
         android:id="@+id/frame_layout"
         android:layout_width="match_parent"
