@@ -86,7 +86,7 @@ public class LoginActivity extends AppCompatActivity {
                             @Override
                             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                 if (dataSnapshot.exists()) {
-                                    String username = dataSnapshot.child("username").getValue(String.class);
+                                    String username = dataSnapshot.child("name").getValue(String.class);
                                     if (username != null) {
                                         // Username found, save user details and proceed
                                         UserSessionManager sessionManager = new UserSessionManager(getApplicationContext());

@@ -78,7 +78,7 @@ public class SignupActivity extends AppCompatActivity {
                         userRef.child("name").setValue(username);
                         userRef.child("email").setValue(email);
 
-                        startActivity(new Intent(SignupActivity.this, MainActivity.class));
+                        startActivity(new Intent(SignupActivity.this, LoginActivity.class));
                         finish();
                     } else {
                         // Registration failed
