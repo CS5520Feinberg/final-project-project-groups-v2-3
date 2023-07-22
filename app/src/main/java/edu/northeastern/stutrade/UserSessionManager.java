@@ -8,16 +8,20 @@ public class UserSessionManager {
     private static final String KEY_USERNAME = "username";
     private static final String KEY_EMAIL = "email";
     private SharedPreferences preferences;
+    private  SharedPreferences.Editor editor;
+    private static final String KEY_LOGGED_IN = "logged_in";
 
-    public UserSessionManager(Context context) {
-        preferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-    }
 
     public void saveUserDetails(String username, String email) {
-        SharedPreferences.Editor editor = preferences.edit();
         editor.putString(KEY_USERNAME, username);
         editor.putString(KEY_EMAIL, email);
         editor.apply();
+        editor = preferences.edit();
+    }
+
+    public UserSessionManager(Context context) {
+        preferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        editor = preferences.edit();
     }
 
     public String getUsername() {
@@ -26,6 +30,20 @@ public class UserSessionManager {
 
     public String getEmail() {
         return preferences.getString(KEY_EMAIL, "");
+    }
+
+    public void setLoggedIn(boolean loggedIn) {
+        editor.putBoolean(KEY_LOGGED_IN, loggedIn);
+        editor.apply();
+    }
+
+    public boolean isUserLoggedIn() {
+        return preferences.getBoolean(KEY_LOGGED_IN, false);
+    }
+
+    public void clearSession() {
+        editor.clear();
+        editor.apply();
     }
 }
 

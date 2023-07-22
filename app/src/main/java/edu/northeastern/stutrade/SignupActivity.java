@@ -10,6 +10,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class SignupActivity extends AppCompatActivity {
     private EditText etEmail, etUsername, etPassword;
@@ -70,6 +72,12 @@ public class SignupActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         // Registration successful
                         Toast.makeText(SignupActivity.this, "Registration successful", Toast.LENGTH_SHORT).show();
+                        String userId = email.substring(0, email.indexOf("@"));
+                        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("users");
+                        DatabaseReference userRef = usersRef.child(userId);
+                        userRef.child("name").setValue(username);
+                        userRef.child("email").setValue(email);
+
                         startActivity(new Intent(SignupActivity.this, MainActivity.class));
                         finish();
                     } else {
