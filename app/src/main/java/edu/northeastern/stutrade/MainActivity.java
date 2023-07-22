@@ -17,6 +17,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         replaceFragment(new BuyFragment());
 
+        UserSessionManager sessionManager = new UserSessionManager(getApplicationContext());
+        String username = sessionManager.getUsername();
+        String email = sessionManager.getEmail();
+
         bottomNavigationView = findViewById(R.id.bottom_navigation_view);
         bottomNavigationView.setOnItemSelectedListener(item -> {
                     int id = item.getItemId();
