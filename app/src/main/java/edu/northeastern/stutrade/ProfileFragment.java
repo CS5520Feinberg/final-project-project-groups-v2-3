@@ -18,6 +18,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -26,20 +33,20 @@ import android.widget.TextView;
  */
 public class ProfileFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private static final String ARG_PARAM1 = "username";
+    private static final String ARG_PARAM2 = "email";
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private String username;
+    private String email;
     private ImageView iv_profile_photo, iv_camera_icon, iv_delete_icon;
     private TextView tv_username, tv_email, tv_bio, tv_location;
     private EditText et_username, et_email, et_bio, et_location;
     private Button btn_edit, btn_save, btn_cancel;
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private Bitmap originalProfilePhotoBitmap;
+    private static String userId;
+    DatabaseReference profileRef;
 
     private static final String KEY_USERNAME = "username";
     private static final String KEY_EMAIL = "email";
@@ -55,17 +62,19 @@ public class ProfileFragment extends Fragment {
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
+     * @param username username.
+     * @param email email id.
      * @return A new instance of fragment ProfileFragment.
      */
-    // TODO: Rename and change types and number of parameters
-    public static ProfileFragment newInstance(String param1, String param2) {
+    public static ProfileFragment newInstance(String username, String email) {
         ProfileFragment fragment = new ProfileFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
+        args.putString(ARG_PARAM1, username);
+        args.putString(ARG_PARAM2, email);
         fragment.setArguments(args);
+
+        userId = email.substring(0, email.indexOf("@")); // Extract user ID from the email
+
         return fragment;
     }
 
@@ -73,8 +82,8 @@ public class ProfileFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            username = getArguments().getString(ARG_PARAM1);
+            email = getArguments().getString(ARG_PARAM2);
         }
 
         if (savedInstanceState != null) {
@@ -86,7 +95,6 @@ public class ProfileFragment extends Fragment {
             originalProfilePhotoBitmap = savedInstanceState.getParcelable(KEY_PROFILE_PHOTO);
             iv_profile_photo.setImageBitmap(originalProfilePhotoBitmap);
         }
-
     }
 
     @Override
@@ -126,12 +134,18 @@ public class ProfileFragment extends Fragment {
         iv_delete_icon = view.findViewById(R.id.iv_delete_icon);
 
         tv_username = view.findViewById(R.id.tv_username);
+        tv_username.setText(username);
         tv_email = view.findViewById(R.id.tv_email);
+        tv_email.setText(email);
+
         tv_bio = view.findViewById(R.id.tv_bio);
         tv_location = view.findViewById(R.id.tv_location);
 
         et_username = view.findViewById(R.id.et_username);
+        et_username.setText(username);
         et_email = view.findViewById(R.id.et_email);
+        et_email.setText(email);
+
         et_bio = view.findViewById(R.id.et_bio);
         et_location = view.findViewById(R.id.et_location);
 
@@ -143,6 +157,36 @@ public class ProfileFragment extends Fragment {
 
         btn_cancel = view.findViewById(R.id.btn_cancel);
         btn_cancel.setOnClickListener(v -> cancelChanges());
+
+        // Get a reference to the user's profile data in the database
+        profileRef = FirebaseDatabase.getInstance().getReference("profiles").child(userId);
+        profileRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    String storedUsername = snapshot.child("username").getValue(String.class);
+                    String storedEmail = snapshot.child("email").getValue(String.class);
+                    String storedBio = snapshot.child("bio").getValue(String.class);
+                    String storedLocation = snapshot.child("location").getValue(String.class);
+
+                    // Populate the views with the data from the database
+                    tv_username.setText(storedUsername);
+                    et_username.setText(storedUsername);
+                    tv_email.setText(storedEmail);
+                    et_email.setText(storedEmail);
+                    tv_bio.setText(storedBio);
+                    et_bio.setText(storedBio);
+                    tv_location.setText(storedLocation);
+                    et_location.setText(storedLocation);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Error occurred, handle the error
+                Toast.makeText(getContext(), "Database Error: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
 
         return view;
     }
@@ -159,6 +203,12 @@ public class ProfileFragment extends Fragment {
         tv_email.setText(editedEmail);
         tv_bio.setText(editedBio);
         tv_location.setText(editedLocation);
+
+        profileRef = FirebaseDatabase.getInstance().getReference("profiles").child(userId);
+        profileRef.child("username").setValue(editedUsername);
+        profileRef.child("email").setValue(editedEmail);
+        profileRef.child("bio").setValue(editedBio);
+        profileRef.child("location").setValue(editedLocation);
 
         showReadOnlyViews();
     }
@@ -221,10 +271,6 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-    private void setDefaultProfilePicture() {
-        iv_profile_photo.setImageResource(R.drawable.ic_profile);
-    }
-
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -233,5 +279,9 @@ public class ProfileFragment extends Fragment {
             Bitmap profilePhotoBitmap = (Bitmap) extras.get("data");
             iv_profile_photo.setImageBitmap(profilePhotoBitmap);
         }
+    }
+
+    private void setDefaultProfilePicture() {
+        iv_profile_photo.setImageResource(R.drawable.ic_profile);
     }
 }
