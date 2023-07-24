@@ -24,6 +24,7 @@ public class MainActivity extends AppCompatActivity {
 
         UserSessionManager sessionManager = new UserSessionManager(getApplicationContext());
         String username = sessionManager.getUsername();
+        String email = sessionManager.getEmail();
         TextView username_tv = findViewById(R.id.username);
         username_tv.setText(username);
         bottomNavigationView = findViewById(R.id.bottom_navigation_view);
@@ -36,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
                         replaceFragment(new BuyFragment());
                         return true;
                     } else if (id == R.id.navigation_profile) {
-                        replaceFragment(new ProfileFragment());
+                        replaceFragment(ProfileFragment.newInstance(username, email));
                         return true;
                     } else if (id == R.id.navigation_chat) {
                         replaceFragment(new ChatFragment());
