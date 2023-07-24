@@ -85,16 +85,6 @@ public class ProfileFragment extends Fragment {
             username = getArguments().getString(ARG_PARAM1);
             email = getArguments().getString(ARG_PARAM2);
         }
-
-        if (savedInstanceState != null) {
-            // Retrieve the data from the saved instance state if available
-            et_username.setText(savedInstanceState.getString(KEY_USERNAME));
-            et_email.setText(savedInstanceState.getString(KEY_EMAIL));
-            et_bio.setText(savedInstanceState.getString(KEY_BIO));
-            et_location.setText(savedInstanceState.getString(KEY_LOCATION));
-            originalProfilePhotoBitmap = savedInstanceState.getParcelable(KEY_PROFILE_PHOTO);
-            iv_profile_photo.setImageBitmap(originalProfilePhotoBitmap);
-        }
     }
 
     @Override
@@ -117,6 +107,11 @@ public class ProfileFragment extends Fragment {
             et_email.setText(savedInstanceState.getString(KEY_EMAIL));
             et_bio.setText(savedInstanceState.getString(KEY_BIO));
             et_location.setText(savedInstanceState.getString(KEY_LOCATION));
+            tv_username.setText(savedInstanceState.getString(KEY_USERNAME));
+            tv_email.setText(savedInstanceState.getString(KEY_EMAIL));
+            tv_bio.setText(savedInstanceState.getString(KEY_BIO));
+            tv_location.setText(savedInstanceState.getString(KEY_LOCATION));
+
             originalProfilePhotoBitmap = savedInstanceState.getParcelable(KEY_PROFILE_PHOTO);
             iv_profile_photo.setImageBitmap(originalProfilePhotoBitmap);
         }
@@ -158,35 +153,54 @@ public class ProfileFragment extends Fragment {
         btn_cancel = view.findViewById(R.id.btn_cancel);
         btn_cancel.setOnClickListener(v -> cancelChanges());
 
-        // Get a reference to the user's profile data in the database
-        profileRef = FirebaseDatabase.getInstance().getReference("profiles").child(userId);
-        profileRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    String storedUsername = snapshot.child("username").getValue(String.class);
-                    String storedEmail = snapshot.child("email").getValue(String.class);
-                    String storedBio = snapshot.child("bio").getValue(String.class);
-                    String storedLocation = snapshot.child("location").getValue(String.class);
+        if (savedInstanceState == null) {
+            // Get a reference to the user's profile data in the database
+            profileRef = FirebaseDatabase.getInstance().getReference("profiles").child(userId);
+            profileRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (snapshot != null && snapshot.exists()) {
+                        String storedUsername = snapshot.child("username").getValue(String.class);
+                        String storedEmail = snapshot.child("email").getValue(String.class);
+                        String storedBio = snapshot.child("bio").getValue(String.class);
+                        String storedLocation = snapshot.child("location").getValue(String.class);
 
-                    // Populate the views with the data from the database
-                    tv_username.setText(storedUsername);
-                    et_username.setText(storedUsername);
-                    tv_email.setText(storedEmail);
-                    et_email.setText(storedEmail);
-                    tv_bio.setText(storedBio);
-                    et_bio.setText(storedBio);
-                    tv_location.setText(storedLocation);
-                    et_location.setText(storedLocation);
+                        // Update the UI on the main thread
+                        requireActivity().runOnUiThread(() -> {
+                            // Populate the views with the data from the database
+                            tv_username.setText(storedUsername);
+                            et_username.setText(storedUsername);
+                            tv_email.setText(storedEmail);
+                            et_email.setText(storedEmail);
+                            tv_bio.setText(storedBio);
+                            et_bio.setText(storedBio);
+                            tv_location.setText(storedLocation);
+                            et_location.setText(storedLocation);
+                        });
+                    }
                 }
-            }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Error occurred, handle the error
-                Toast.makeText(getContext(), "Database Error: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    // Error occurred, handle the error
+                    Toast.makeText(getContext(), "Database Error: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        if (savedInstanceState != null) {
+            // Retrieve the data from the saved instance state if available
+            et_username.setText(savedInstanceState.getString(KEY_USERNAME));
+            et_email.setText(savedInstanceState.getString(KEY_EMAIL));
+            et_bio.setText(savedInstanceState.getString(KEY_BIO));
+            et_location.setText(savedInstanceState.getString(KEY_LOCATION));
+            tv_username.setText(savedInstanceState.getString(KEY_USERNAME));
+            tv_email.setText(savedInstanceState.getString(KEY_EMAIL));
+            tv_bio.setText(savedInstanceState.getString(KEY_BIO));
+            tv_location.setText(savedInstanceState.getString(KEY_LOCATION));
+            originalProfilePhotoBitmap = savedInstanceState.getParcelable(KEY_PROFILE_PHOTO);
+            iv_profile_photo.setImageBitmap(originalProfilePhotoBitmap);
+        }
 
         return view;
     }
