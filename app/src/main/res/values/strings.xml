@@ -13,4 +13,7 @@
     <string name="edit">Edit</string>
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
+    <string name="chat">Chat</string>
+    <string name="type_your_message">Type your message</string>
+    <string name="send">Send</string>
 </resources>

@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
                         replaceFragment(ProfileFragment.newInstance(username, email));
                         return true;
                     } else if (id == R.id.navigation_chat) {
-                        replaceFragment(new ChatFragment());
+                        replaceFragment(ChatFragment.newInstance(username, email));
                         return true;
                     }
                     return true;
