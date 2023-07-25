@@ -50,6 +50,24 @@ public class MainActivity extends AppCompatActivity {
         OnBackPressedCallback onBackPressedCallback = new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
+                Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.frame_layout);
+
+                // Check if the current fragment is a ChatFragment
+                if (currentFragment instanceof ChatFragment) {
+                    ChatFragment chatFragment = (ChatFragment) currentFragment;
+                    if (chatFragment.onBackPressed()) {
+                        // The back button press was handled by the ChatFragment, do nothing further.
+                        return;
+                    }
+                }
+                if (currentFragment instanceof ProfileFragment) {
+                    ProfileFragment profileFragment = (ProfileFragment) currentFragment;
+                    if (profileFragment.onBackPressed()) {
+                        // The back button press was handled by the ChatFragment, do nothing further.
+                        return;
+                    }
+                }
+
                 // Check if the current activity is the root activity
                 if (isTaskRoot()) {
                     // If it is the root activity, call finish to exit the app

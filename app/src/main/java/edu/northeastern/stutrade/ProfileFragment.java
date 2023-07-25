@@ -1,6 +1,7 @@
 package edu.northeastern.stutrade;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
@@ -151,7 +152,7 @@ public class ProfileFragment extends Fragment {
         btn_save.setOnClickListener(v -> saveChanges());
 
         btn_cancel = view.findViewById(R.id.btn_cancel);
-        btn_cancel.setOnClickListener(v -> cancelChanges());
+        btn_cancel.setOnClickListener(v -> showExitConfirmationDialog());
 
         if (savedInstanceState == null) {
             // Get a reference to the user's profile data in the database
@@ -159,7 +160,7 @@ public class ProfileFragment extends Fragment {
             profileRef.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    if (snapshot != null && snapshot.exists()) {
+                    if (snapshot.exists()) {
                         String storedUsername = snapshot.child("username").getValue(String.class);
                         String storedEmail = snapshot.child("email").getValue(String.class);
                         String storedBio = snapshot.child("bio").getValue(String.class);
@@ -297,5 +298,28 @@ public class ProfileFragment extends Fragment {
 
     private void setDefaultProfilePicture() {
         iv_profile_photo.setImageResource(R.drawable.ic_profile);
+    }
+
+    public boolean onBackPressed() {
+        if (btn_edit.getVisibility() == View.GONE && btn_save.getVisibility() == View.VISIBLE) {
+            showExitConfirmationDialog();
+            return true; // Consume the back button press event
+        }
+        return false; // Let the activity handle the back button press
+    }
+
+    private void showExitConfirmationDialog() {
+        new AlertDialog.Builder(getContext())
+                .setTitle("Discard Changes")
+                .setMessage("Are you sure you want to discard changes?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    // If the user clicks "Yes", discard the changes
+                    cancelChanges();
+                })
+                .setNegativeButton("No", (dialog, which) -> {
+                    // If the user clicks "No", dismiss the dialog and continue
+                    dialog.dismiss();
+                })
+                .show();
     }
 }

@@ -53,7 +53,6 @@ public class ChatFragment extends Fragment {
     private Button btn_chat;
     private Spinner sp_user_list;
     private List<String> userList;
-    private DatabaseReference usersReference;
     private DatabaseReference chatToReference;
     private List<Chat> chatList;
 
@@ -157,7 +156,7 @@ public class ChatFragment extends Fragment {
     // get list of users from the database
     private void getUserList() {
         // Initialize Firebase Database reference for users
-        usersReference = FirebaseDatabase.getInstance().getReference().child("users");
+        DatabaseReference usersReference = FirebaseDatabase.getInstance().getReference().child("users");
 
         // Populate the user list in the spinner
         userList = new ArrayList<>();
@@ -240,6 +239,19 @@ public class ChatFragment extends Fragment {
         }
     }
 
+    public boolean onBackPressed() {
+        if (sp_user_list.getVisibility() == View.GONE) {
+            sp_user_list.setVisibility(View.VISIBLE);
+            btn_chat.setVisibility(View.VISIBLE);
+
+            rv_chat.setVisibility(View.GONE);
+            tv_chat_with.setVisibility(View.GONE);
+            et_message.setVisibility(View.GONE);
+            btn_send.setVisibility(View.GONE);
+            return true; // Consume the back button press event
+        }
+        return false; // Let the activity handle the back button press
+    }
 
     // Define a Chat class to hold chat data
     static abstract class Chat implements Comparable<Chat>{
