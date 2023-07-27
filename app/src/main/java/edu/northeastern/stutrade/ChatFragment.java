@@ -55,6 +55,10 @@ public class ChatFragment extends Fragment {
     private List<String> userList;
     private DatabaseReference chatToReference;
     private List<Chat> chatList;
+    String userId;
+    String selectedUser;
+    String selectedUsername;
+    String selectedUserID;
 
     public ChatFragment() {
         // Required empty public constructor
@@ -83,6 +87,7 @@ public class ChatFragment extends Fragment {
         if (getArguments() != null) {
             username = getArguments().getString(ARG_PARAM1);
             email = getArguments().getString(ARG_PARAM2);
+            userId = email.substring(0, email.indexOf("@"));
         }
     }
 
@@ -116,21 +121,21 @@ public class ChatFragment extends Fragment {
             sp_user_list.setVisibility(View.GONE);
             btn_chat.setVisibility(View.GONE);
 
-            String selectedUser = sp_user_list.getSelectedItem().toString();
-            tv_chat_with.setText(selectedUser);
-            displayUserChat(selectedUser, view);
+            selectedUser = sp_user_list.getSelectedItem().toString();
+            selectedUsername = selectedUser.substring(0, selectedUser.indexOf("(")).trim();
+            selectedUserID = selectedUser.substring(selectedUser.indexOf("(") + 1, selectedUser.indexOf(")")).trim();
+            tv_chat_with.setText(selectedUsername);
+            displayUserChat(selectedUserID, view);
         });
 
         // Handle click events for the send button
         btn_send.setOnClickListener(v -> {
             String message = et_message.getText().toString().trim();
             if (!message.isEmpty()) {
-                String selectedUser = sp_user_list.getSelectedItem().toString();
                 if (!selectedUser.isEmpty()) {
-
                     // Initialize Firebase Database reference for chat
                     chatToReference = FirebaseDatabase.getInstance().getReference().child("chats")
-                            .child(username).child(selectedUser).push();
+                            .child(userId).child(selectedUserID).push();
                     Map<String, Object> messageToMap = new HashMap<>();
                     messageToMap.put("message", message);
                     messageToMap.put("isMessageSent", "true");
@@ -138,7 +143,7 @@ public class ChatFragment extends Fragment {
                     chatToReference.setValue(messageToMap);
 
                     DatabaseReference chatFromReference = FirebaseDatabase.getInstance().getReference().child("chats")
-                            .child(selectedUser).child(username).push();
+                            .child(selectedUserID).child(userId).push();
                     Map<String, Object> messageFromMap = new HashMap<>();
                     messageFromMap.put("message", message);
                     messageFromMap.put("isMessageSent", "false");
@@ -188,11 +193,11 @@ public class ChatFragment extends Fragment {
     }
 
     // display the chat for two users
-    private void displayUserChat(String selectedUser, View view) {
-        if (!selectedUser.isEmpty()) {
+    private void displayUserChat(String selectedUserID, View view) {
+        if (!selectedUserID.isEmpty()) {
             chatList.clear();
             // Initialize Firebase Database reference for chat
-            chatToReference = FirebaseDatabase.getInstance().getReference().child("chats").child(username).child(selectedUser);
+            chatToReference = FirebaseDatabase.getInstance().getReference().child("chats").child(userId).child(selectedUserID);
 
             chatToReference.addValueEventListener(new ValueEventListener() {
                 @Override
@@ -209,7 +214,7 @@ public class ChatFragment extends Fragment {
                             if (isMessageSent) {
                                 from_user = username;
                             } else {
-                                from_user = selectedUser;
+                                from_user = selectedUsername;
                             }
                             String message = snapshot.child("message").getValue(String.class);
 

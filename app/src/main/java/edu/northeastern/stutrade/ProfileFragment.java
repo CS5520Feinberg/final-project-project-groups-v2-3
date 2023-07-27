@@ -9,6 +9,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import android.provider.MediaStore;
@@ -21,6 +22,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -41,18 +43,20 @@ public class ProfileFragment extends Fragment {
     private String username;
     private String email;
     private ImageView iv_profile_photo, iv_camera_icon, iv_delete_icon;
-    private TextView tv_username, tv_email, tv_bio, tv_location;
-    private EditText et_username, et_email, et_bio, et_location;
-    private Button btn_edit, btn_save, btn_cancel;
+    private TextView tv_username, tv_email, tv_bio, tv_location, tv_university;
+    private EditText et_username, et_bio, et_location, et_university;
+    private Button btn_edit, btn_save, btn_cancel, btn_logout;
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private Bitmap originalProfilePhotoBitmap;
     private static String userId;
     DatabaseReference profileRef;
+    private FirebaseAuth firebaseAuth;
 
     private static final String KEY_USERNAME = "username";
     private static final String KEY_EMAIL = "email";
     private static final String KEY_BIO = "bio";
     private static final String KEY_LOCATION = "location";
+    private static final String KEY_UNIVERSITY= "university";
     private static final String KEY_PROFILE_PHOTO = "profile_photo";
 
     public ProfileFragment() {
@@ -93,7 +97,7 @@ public class ProfileFragment extends Fragment {
         super.onSaveInstanceState(outState);
         // Save the data to the outState bundle
         outState.putString(KEY_USERNAME, et_username.getText().toString());
-        outState.putString(KEY_EMAIL, et_email.getText().toString());
+        outState.putString(KEY_EMAIL, tv_email.getText().toString());
         outState.putString(KEY_BIO, et_bio.getText().toString());
         outState.putString(KEY_LOCATION, et_location.getText().toString());
         outState.putParcelable(KEY_PROFILE_PHOTO, originalProfilePhotoBitmap);
@@ -105,13 +109,14 @@ public class ProfileFragment extends Fragment {
         if (savedInstanceState != null) {
             // Restore the data from the restored instance state
             et_username.setText(savedInstanceState.getString(KEY_USERNAME));
-            et_email.setText(savedInstanceState.getString(KEY_EMAIL));
             et_bio.setText(savedInstanceState.getString(KEY_BIO));
             et_location.setText(savedInstanceState.getString(KEY_LOCATION));
+            et_university.setText(savedInstanceState.getString(KEY_UNIVERSITY));
             tv_username.setText(savedInstanceState.getString(KEY_USERNAME));
             tv_email.setText(savedInstanceState.getString(KEY_EMAIL));
             tv_bio.setText(savedInstanceState.getString(KEY_BIO));
             tv_location.setText(savedInstanceState.getString(KEY_LOCATION));
+            tv_university.setText(savedInstanceState.getString(KEY_UNIVERSITY));
 
             originalProfilePhotoBitmap = savedInstanceState.getParcelable(KEY_PROFILE_PHOTO);
             iv_profile_photo.setImageBitmap(originalProfilePhotoBitmap);
@@ -136,17 +141,21 @@ public class ProfileFragment extends Fragment {
 
         tv_bio = view.findViewById(R.id.tv_bio);
         tv_location = view.findViewById(R.id.tv_location);
+        tv_university = view.findViewById(R.id.tv_university);
 
         et_username = view.findViewById(R.id.et_username);
         et_username.setText(username);
-        et_email = view.findViewById(R.id.et_email);
-        et_email.setText(email);
 
         et_bio = view.findViewById(R.id.et_bio);
         et_location = view.findViewById(R.id.et_location);
+        et_university = view.findViewById(R.id.et_university);
 
         btn_edit = view.findViewById(R.id.btn_edit);
         btn_edit.setOnClickListener(v -> showEditViews());
+
+        btn_logout = view.findViewById(R.id.btn_logout);
+        btn_logout.setOnClickListener(v -> logout());
+        firebaseAuth = FirebaseAuth.getInstance();
 
         btn_save = view.findViewById(R.id.btn_save);
         btn_save.setOnClickListener(v -> saveChanges());
@@ -165,6 +174,7 @@ public class ProfileFragment extends Fragment {
                         String storedEmail = snapshot.child("email").getValue(String.class);
                         String storedBio = snapshot.child("bio").getValue(String.class);
                         String storedLocation = snapshot.child("location").getValue(String.class);
+                        String storedUniversity = snapshot.child("university").getValue(String.class);
 
                         // Update the UI on the main thread
                         requireActivity().runOnUiThread(() -> {
@@ -172,11 +182,12 @@ public class ProfileFragment extends Fragment {
                             tv_username.setText(storedUsername);
                             et_username.setText(storedUsername);
                             tv_email.setText(storedEmail);
-                            et_email.setText(storedEmail);
                             tv_bio.setText(storedBio);
                             et_bio.setText(storedBio);
                             tv_location.setText(storedLocation);
                             et_location.setText(storedLocation);
+                            tv_university.setText(storedUniversity);
+                            et_university.setText(storedUniversity);
                         });
                     }
                 }
@@ -192,13 +203,14 @@ public class ProfileFragment extends Fragment {
         if (savedInstanceState != null) {
             // Retrieve the data from the saved instance state if available
             et_username.setText(savedInstanceState.getString(KEY_USERNAME));
-            et_email.setText(savedInstanceState.getString(KEY_EMAIL));
             et_bio.setText(savedInstanceState.getString(KEY_BIO));
             et_location.setText(savedInstanceState.getString(KEY_LOCATION));
+            et_university.setText(savedInstanceState.getString(KEY_UNIVERSITY));
             tv_username.setText(savedInstanceState.getString(KEY_USERNAME));
             tv_email.setText(savedInstanceState.getString(KEY_EMAIL));
             tv_bio.setText(savedInstanceState.getString(KEY_BIO));
             tv_location.setText(savedInstanceState.getString(KEY_LOCATION));
+            tv_university.setText(savedInstanceState.getString(KEY_UNIVERSITY));
             originalProfilePhotoBitmap = savedInstanceState.getParcelable(KEY_PROFILE_PHOTO);
             iv_profile_photo.setImageBitmap(originalProfilePhotoBitmap);
         }
@@ -209,21 +221,24 @@ public class ProfileFragment extends Fragment {
     private void saveChanges() {
         // Save the edited data
         String editedUsername = et_username.getText().toString();
-        String editedEmail = et_email.getText().toString();
         String editedBio = et_bio.getText().toString();
         String editedLocation = et_location.getText().toString();
+        String editedUniversity = et_university.getText().toString();
 
         // Update the read-only views with the edited data
         tv_username.setText(editedUsername);
-        tv_email.setText(editedEmail);
         tv_bio.setText(editedBio);
         tv_location.setText(editedLocation);
+        tv_university.setText(editedUniversity);
 
         profileRef = FirebaseDatabase.getInstance().getReference("profiles").child(userId);
         profileRef.child("username").setValue(editedUsername);
-        profileRef.child("email").setValue(editedEmail);
         profileRef.child("bio").setValue(editedBio);
         profileRef.child("location").setValue(editedLocation);
+        profileRef.child("university").setValue(editedUniversity);
+
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
+        userRef.child("name").setValue(editedUsername);
 
         showReadOnlyViews();
     }
@@ -231,9 +246,9 @@ public class ProfileFragment extends Fragment {
     private void cancelChanges() {
         // Revert the edited views with the read-only data
         et_username.setText(tv_username.getText());
-        et_email.setText(tv_email.getText());
         et_bio.setText(tv_bio.getText());
         et_location.setText(tv_location.getText());
+        et_university.setText(tv_university.getText());
         iv_profile_photo.setImageBitmap(originalProfilePhotoBitmap);
 
         showReadOnlyViews();
@@ -245,12 +260,14 @@ public class ProfileFragment extends Fragment {
         tv_email.setVisibility(View.VISIBLE);
         tv_bio.setVisibility(View.VISIBLE);
         tv_location.setVisibility(View.VISIBLE);
+        tv_university.setVisibility(View.VISIBLE);
         btn_edit.setVisibility(View.VISIBLE);
+        btn_logout.setVisibility(View.VISIBLE);
 
         et_username.setVisibility(View.GONE);
-        et_email.setVisibility(View.GONE);
         et_bio.setVisibility(View.GONE);
         et_location.setVisibility(View.GONE);
+        et_university.setVisibility(View.GONE);
         btn_save.setVisibility(View.GONE);
         btn_cancel.setVisibility(View.GONE);
         iv_camera_icon.setVisibility(View.GONE);
@@ -262,9 +279,9 @@ public class ProfileFragment extends Fragment {
 
         //show the edit views and hide the text views
         et_username.setVisibility(View.VISIBLE);
-        et_email.setVisibility(View.VISIBLE);
         et_bio.setVisibility(View.VISIBLE);
         et_location.setVisibility(View.VISIBLE);
+        et_university.setVisibility(View.VISIBLE);
         btn_save.setVisibility(View.VISIBLE);
         btn_cancel.setVisibility(View.VISIBLE);
         iv_camera_icon.setVisibility(View.VISIBLE);
@@ -273,10 +290,11 @@ public class ProfileFragment extends Fragment {
         iv_delete_icon.setOnClickListener(v -> setDefaultProfilePicture());
 
         tv_username.setVisibility(View.GONE);
-        tv_email.setVisibility(View.GONE);
         tv_bio.setVisibility(View.GONE);
         tv_location.setVisibility(View.GONE);
+        tv_university.setVisibility(View.GONE);
         btn_edit.setVisibility(View.GONE);
+        btn_logout.setVisibility(View.GONE);
     }
 
     private void dispatchTakePictureIntent() {
@@ -321,5 +339,24 @@ public class ProfileFragment extends Fragment {
                     dialog.dismiss();
                 })
                 .show();
+    }
+
+    private void logout() {
+        // Sign out the user from Firebase Authentication
+        firebaseAuth.signOut();
+
+        // Redirect the user to the login page
+        redirectToLoginScreen();
+    }
+
+    private void redirectToLoginScreen() {
+        Intent intent = new Intent(getContext(), LoginActivity.class);
+        startActivity(intent);
+
+        // Finish the current activity to prevent the user from going back to the profile screen after logging out
+        AppCompatActivity activity = (AppCompatActivity) requireActivity();
+        activity.finish();
+
+        Toast.makeText(getContext(), "Logged out successfully!", Toast.LENGTH_SHORT).show();
     }
 }
