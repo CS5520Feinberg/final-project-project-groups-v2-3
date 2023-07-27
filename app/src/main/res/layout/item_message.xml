@@ -1,48 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/relativeLayout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <!-- Horizontal LinearLayout for Username and Time -->
-    <LinearLayout
-        android:id="@+id/ll_username_time"
+    <!-- MaterialCardView for each message item -->
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_alignParentStart="true"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:gravity="center_vertical">
+        android:layout_margin="8dp"
+        app:cardElevation="2dp"
+        app:cardCornerRadius="8dp">
 
-        <TextView
-            android:id="@+id/tv_from_user"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:gravity="center_vertical"
-            android:textStyle="bold"
-            android:textSize="16sp"/>
-
-        <TextView
-            android:id="@+id/tv_message_time"
-            android:layout_width="wrap_content"
+        <!-- Vertical LinearLayout for Username, Time, and Message -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:gravity="center_vertical"
-            android:textColor="@android:color/black"
-            android:textSize="11sp" />
-    </LinearLayout>
+            android:orientation="vertical"
+            android:padding="8dp">
 
-    <TextView
-        android:id="@+id/tv_message"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/ll_username_time"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="12dp"
-        android:gravity="center_vertical"
-        android:minWidth="100dp"
-        android:textColor="@android:color/black"
-        android:textSize="16sp" />
+            <!-- Horizontal LinearLayout for Username and Time -->
+            <LinearLayout
+                android:id="@+id/ll_username_time"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/tv_from_user"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textStyle="bold"
+                    android:textSize="16sp" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/tv_message_time"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:gravity="center_vertical|end"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/tv_message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:textSize="16sp" />
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 </RelativeLayout>
