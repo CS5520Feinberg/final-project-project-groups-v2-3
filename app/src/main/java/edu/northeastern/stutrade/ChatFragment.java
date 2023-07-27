@@ -169,8 +169,10 @@ public class ChatFragment extends Fragment {
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 userList.clear();
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    String userId = snapshot.getKey();
                     String name = snapshot.child("name").getValue(String.class);
-                    if (name != null && !name.equals(username)) {
+                    if (userId != null && !userId.equals(email.substring(0, email.indexOf("@")))) {
+                        name = name + " (" + userId +")";
                         userList.add(name);
                     }
                 }
