@@ -38,4 +38,13 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductViewHolder> {
     public int getItemCount() {
         return productList.size();
     }
+
+    public void setProductList(List<Product> productList) {
+        this.productList = productList;
+        notifyDataSetChanged();
+    }
+
+    public List<Product> getProductList() {
+       return productList;
+    }
 }

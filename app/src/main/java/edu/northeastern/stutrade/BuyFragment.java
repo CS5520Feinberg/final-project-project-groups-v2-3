@@ -1,20 +1,17 @@
 package edu.northeastern.stutrade;
 
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.GridLayout;
-import android.widget.Spinner;
+
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.database.DataSnapshot;
@@ -24,16 +21,16 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 import edu.northeastern.stutrade.Models.Product;
-import edu.northeastern.stutrade.ProductAdapter;
 
 public class BuyFragment extends Fragment {
     private RecyclerView productsRecyclerView;
     private ProductAdapter productAdapter;
-    private Spinner sortSpinner;
-    private GridLayout sortGridLayout;
     private String[] sortingOptions = {
             "Price Increasing",
             "Price Decreasing",
@@ -45,10 +42,7 @@ public class BuyFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_buy, container, false);
         productsRecyclerView = rootView.findViewById(R.id.productRecyclerView);
-        //sortGridLayout = rootView.findViewById(R.id.gridSortLayout);
-        // Initialize Firebase Database reference
 
-         // Set up the Adapter for the Material Design Spinner
         ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), R.layout.dropdown_item, sortingOptions);
         AutoCompleteTextView sortDropdown = rootView.findViewById(R.id.sortDropdown);
         sortDropdown.setAdapter(adapter);
@@ -56,6 +50,7 @@ public class BuyFragment extends Fragment {
         // Handle the selected sorting option
         sortDropdown.setOnItemClickListener((parent, view, position, id) -> {
             String selectedOption = sortingOptions[position];
+            handleSorting(selectedOption);
 
         });
         FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -85,14 +80,38 @@ public class BuyFragment extends Fragment {
 
         return rootView;
     }
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
 
-        // Check the orientation
-        int columns = newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE ? 2 : 1;
+    private void handleSorting(String selectedOption) {
+        List<Product> sortedList = new ArrayList<>(productAdapter.getProductList());
 
-        // Set the number of columns in the GridLayout
-        //sortGridLayout.setColumnCount(columns);
+        switch (selectedOption) {
+            case "Price Increasing":
+                Collections.sort(sortedList, Comparator.comparing(Product::getPriceAsDouble));
+                break;
+            case "Price Decreasing":
+                Collections.sort(sortedList, (product1, product2) -> product2.getPriceAsDouble().compareTo(product1.getPriceAsDouble()));
+                break;
+            case "Date Ascending":
+                Collections.sort(sortedList, (product1, product2) -> {
+                    Date date1 = product1.getDatePostedAsDate();
+                    Date date2 = product2.getDatePostedAsDate();
+                    return date1 != null && date2 != null ? date1.compareTo(date2) : 0;
+                });
+                break;
+            case "Date Descending":
+            default:
+                Collections.sort(sortedList, (product1, product2) -> {
+                    Date date1 = product1.getDatePostedAsDate();
+                    Date date2 = product2.getDatePostedAsDate();
+                    return date1 != null && date2 != null ? date2.compareTo(date1) : 0;
+                });
+                break;
+        }
+
+        // Update the RecyclerView with the sorted list
+        productAdapter.setProductList(sortedList);
+        productAdapter.notifyDataSetChanged();
     }
+
+
 }
