@@ -171,7 +171,6 @@ public class ProfileFragment extends Fragment {
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     if (isAdded() && snapshot.exists()) {
                         String storedUsername = snapshot.child("username").getValue(String.class);
-                        String storedEmail = snapshot.child("email").getValue(String.class);
                         String storedBio = snapshot.child("bio").getValue(String.class);
                         String storedLocation = snapshot.child("location").getValue(String.class);
                         String storedUniversity = snapshot.child("university").getValue(String.class);
@@ -181,7 +180,6 @@ public class ProfileFragment extends Fragment {
                             // Populate the views with the data from the database
                             tv_username.setText(storedUsername);
                             et_username.setText(storedUsername);
-                            tv_email.setText(storedEmail);
                             tv_bio.setText(storedBio);
                             et_bio.setText(storedBio);
                             tv_location.setText(storedLocation);

@@ -11,12 +11,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -43,22 +44,19 @@ public class ChatFragment extends Fragment {
     private static final String ARG_PARAM1 = "username";
     private static final String ARG_PARAM2 = "email";
 
-    private String username;
-    private String email;
+    private String username, email;
 
     private RecyclerView rv_chat;
     private TextView tv_chat_with;
     private EditText et_message;
-    private Button btn_send;
-    private Button btn_chat;
-    private Spinner sp_user_list;
+    private Button btn_send, btn_chat;
     private List<String> userList;
     private DatabaseReference chatToReference;
     private List<Chat> chatList;
-    String userId;
-    String selectedUser;
-    String selectedUsername;
-    String selectedUserID;
+    String userId, selectedUser, selectedUsername, selectedUserID;
+
+    AutoCompleteTextView sortDropdown;
+    TextInputLayout sortDropdownLayout;
 
     public ChatFragment() {
         // Required empty public constructor
@@ -102,7 +100,7 @@ public class ChatFragment extends Fragment {
         tv_chat_with = view.findViewById(R.id.tv_chat_with);
         btn_send = view.findViewById(R.id.btn_send);
         btn_chat = view.findViewById(R.id.btn_chat);
-        sp_user_list = view.findViewById(R.id.sp_user_list);
+        sortDropdownLayout = view.findViewById(R.id.sortDropdownLayout);
         chatList = new ArrayList<>();
 
         // Initialize RecyclerView and its adapter
@@ -110,7 +108,7 @@ public class ChatFragment extends Fragment {
         rv_chat.setLayoutManager(new LinearLayoutManager(getActivity()));
         rv_chat.setAdapter(new ChatAdapter(chatList));
 
-        getUserList();
+        getUserList(view);
 
         btn_chat.setOnClickListener(v -> {
             rv_chat.setVisibility(View.VISIBLE);
@@ -118,10 +116,10 @@ public class ChatFragment extends Fragment {
             et_message.setVisibility(View.VISIBLE);
             btn_send.setVisibility(View.VISIBLE);
 
-            sp_user_list.setVisibility(View.GONE);
+            sortDropdown.setVisibility(View.GONE);
+            sortDropdownLayout.setVisibility(View.GONE);
             btn_chat.setVisibility(View.GONE);
 
-            selectedUser = sp_user_list.getSelectedItem().toString();
             selectedUsername = selectedUser.substring(0, selectedUser.indexOf("(")).trim();
             selectedUserID = selectedUser.substring(selectedUser.indexOf("(") + 1, selectedUser.indexOf(")")).trim();
             tv_chat_with.setText(selectedUsername);
@@ -159,14 +157,18 @@ public class ChatFragment extends Fragment {
     }
 
     // get list of users from the database
-    private void getUserList() {
+    private void getUserList(View rootView) {
         // Initialize Firebase Database reference for users
         DatabaseReference usersReference = FirebaseDatabase.getInstance().getReference().child("users");
 
         // Populate the user list in the spinner
         userList = new ArrayList<>();
-        final ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_spinner_dropdown_item, userList);
-        sp_user_list.setAdapter(spinnerAdapter);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), R.layout.dropdown_item, userList);
+        sortDropdown = rootView.findViewById(R.id.sortDropdown);
+        sortDropdown.setAdapter(adapter);
+
+        // Get the selected user
+        sortDropdown.setOnItemClickListener((parent, view, position, id) -> selectedUser = userList.get(position));
 
         // Read users from the Firebase Database and update the spinner
         usersReference.addValueEventListener(new ValueEventListener() {
@@ -181,7 +183,6 @@ public class ChatFragment extends Fragment {
                         userList.add(name);
                     }
                 }
-                spinnerAdapter.notifyDataSetChanged();
             }
 
             @Override
@@ -247,8 +248,9 @@ public class ChatFragment extends Fragment {
     }
 
     public boolean onBackPressed() {
-        if (sp_user_list.getVisibility() == View.GONE) {
-            sp_user_list.setVisibility(View.VISIBLE);
+        if (sortDropdown.getVisibility() == View.GONE) {
+            sortDropdown.setVisibility(View.VISIBLE);
+            sortDropdownLayout.setVisibility(View.VISIBLE);
             btn_chat.setVisibility(View.VISIBLE);
 
             rv_chat.setVisibility(View.GONE);
