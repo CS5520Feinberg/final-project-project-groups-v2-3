@@ -93,6 +93,8 @@ public class LoginActivity extends AppCompatActivity {
                                         sessionManager.saveUserDetails(username, email);
                                         sessionManager.setLoggedIn(true);
 
+                                        startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                                        finish();
 
                                     } else {
                                         // 'username' value is null, handle the error
@@ -117,8 +119,8 @@ public class LoginActivity extends AppCompatActivity {
                     }
                 });
 
-        startActivity(new Intent(LoginActivity.this, MainActivity.class));
-        finish();
+        //startActivity(new Intent(LoginActivity.this, MainActivity.class));
+        //finish();
     }
 
     private boolean isValidEmail(CharSequence target) {

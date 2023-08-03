@@ -101,4 +101,9 @@ public class MainActivity extends AppCompatActivity {
     private void replaceFragment(Fragment fragment) {
         getSupportFragmentManager().beginTransaction().replace(R.id.frame_layout, fragment).commit();
     }
+
+    void updateUsernameTextView(String newUsername) {
+        TextView username_tv = findViewById(R.id.username);
+        username_tv.setText(newUsername);
+    }
 }
