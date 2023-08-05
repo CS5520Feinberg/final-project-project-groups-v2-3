@@ -169,9 +169,8 @@ public class ProfileFragment extends Fragment {
             profileRef.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    if (snapshot.exists()) {
+                    if (isAdded() && snapshot.exists()) {
                         String storedUsername = snapshot.child("username").getValue(String.class);
-                        String storedEmail = snapshot.child("email").getValue(String.class);
                         String storedBio = snapshot.child("bio").getValue(String.class);
                         String storedLocation = snapshot.child("location").getValue(String.class);
                         String storedUniversity = snapshot.child("university").getValue(String.class);
@@ -181,7 +180,6 @@ public class ProfileFragment extends Fragment {
                             // Populate the views with the data from the database
                             tv_username.setText(storedUsername);
                             et_username.setText(storedUsername);
-                            tv_email.setText(storedEmail);
                             tv_bio.setText(storedBio);
                             et_bio.setText(storedBio);
                             tv_location.setText(storedLocation);
@@ -225,6 +223,18 @@ public class ProfileFragment extends Fragment {
         String editedLocation = et_location.getText().toString();
         String editedUniversity = et_university.getText().toString();
 
+        UserSessionManager sessionManager;
+        if(!editedUsername.contentEquals(tv_username.getText())) {
+            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
+            userRef.child("name").setValue(editedUsername);
+
+            sessionManager = new UserSessionManager(getContext());
+            sessionManager.saveUserDetails(editedUsername, email);
+            sessionManager.setLoggedIn(true);
+
+            ((MainActivity) getContext()).updateUsernameTextView(editedUsername);
+        }
+
         // Update the read-only views with the edited data
         tv_username.setText(editedUsername);
         tv_bio.setText(editedBio);
@@ -236,9 +246,6 @@ public class ProfileFragment extends Fragment {
         profileRef.child("bio").setValue(editedBio);
         profileRef.child("location").setValue(editedLocation);
         profileRef.child("university").setValue(editedUniversity);
-
-        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
-        userRef.child("name").setValue(editedUsername);
 
         showReadOnlyViews();
     }
@@ -352,6 +359,9 @@ public class ProfileFragment extends Fragment {
     private void redirectToLoginScreen() {
         Intent intent = new Intent(getContext(), LoginActivity.class);
         startActivity(intent);
+
+        UserSessionManager sessionManager = new UserSessionManager(getContext());
+        sessionManager.clearSession();
 
         // Finish the current activity to prevent the user from going back to the profile screen after logging out
         AppCompatActivity activity = (AppCompatActivity) requireActivity();
