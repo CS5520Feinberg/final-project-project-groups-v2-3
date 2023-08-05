@@ -92,6 +92,8 @@ public class LoginActivity extends AppCompatActivity {
                                         UserSessionManager sessionManager = new UserSessionManager(getApplicationContext());
                                         sessionManager.saveUserDetails(username, email);
                                         sessionManager.setLoggedIn(true);
+                                        startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                                        finish();
 
 
                                     } else {
@@ -113,12 +115,10 @@ public class LoginActivity extends AppCompatActivity {
                         });
                     } else {
                         // Login failed
-                        Toast.makeText(LoginActivity.this, "Login failed", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(LoginActivity.this, "Email/Password is incorrect. If you are a new user, please sign up", Toast.LENGTH_SHORT).show();
                     }
                 });
 
-        startActivity(new Intent(LoginActivity.this, MainActivity.class));
-        finish();
     }
 
     private boolean isValidEmail(CharSequence target) {

@@ -7,6 +7,8 @@
     android:orientation="vertical">
 
     <!-- Add other components like search bar, filters, etc., if needed -->
+    <!-- Loader view -->
+
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/sortDropdownLayout"
@@ -27,6 +29,14 @@
 
 </com.google.android.material.textfield.TextInputLayout>
 
+    <ProgressBar
+        android:id="@+id/loader"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_gravity="center"
+        android:paddingTop="50dp"
+        android:visibility="gone" />
 
 <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/productRecyclerView"

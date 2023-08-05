@@ -23,6 +23,8 @@ public class ProductViewFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setRetainInstance(true);
         View rootView = inflater.inflate(R.layout.fragment_product_view, container, false);
 
         Bundle args = getArguments();
@@ -55,7 +57,6 @@ public class ProductViewFragment extends Fragment {
                 showImagePopup();
             }
         });
-        setRetainInstance(true);
         return rootView;
     }
 

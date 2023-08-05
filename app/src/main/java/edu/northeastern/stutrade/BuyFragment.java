@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.ProgressBar;
 
 
 import androidx.annotation.NonNull;
@@ -32,7 +33,9 @@ import edu.northeastern.stutrade.Models.Product;
 
 public class BuyFragment extends Fragment implements ProductAdapter.OnProductClickListener{
     private RecyclerView productsRecyclerView;
+    private ProgressBar loader;
     private ProductAdapter productAdapter;
+
     private String[] sortingOptions = {
             "Price Increasing",
             "Price Decreasing",
@@ -41,25 +44,25 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
     };
 
     private String selectedSortingOption="";
-    private List<Product> productList;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_buy, container, false);
         productsRecyclerView = rootView.findViewById(R.id.productRecyclerView);
+        loader = rootView.findViewById(R.id.loader);
         if (savedInstanceState != null && savedInstanceState.containsKey("product_list")) {
             List<Product> savedProductList = (ArrayList<Product>) savedInstanceState.getSerializable("product_list");
             if (savedProductList != null) {
-                productList = savedProductList;
+                productAdapter.setProductList(savedProductList);
             }
             String sortValue = savedInstanceState.getString("sorting_option");
             if( !sortValue.equals("")){
                 setDefaultSortingOption(sortValue,rootView);
             }
         }else{
-            sortDropdown(rootView);
             productsRecyclerView();
+            sortDropdown(rootView);
         }
         return rootView;
     }
@@ -77,6 +80,7 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
     }
 
     private void productsRecyclerView(){
+        loader.setVisibility(View.VISIBLE);
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference productsRef = database.getReference("products");
 
@@ -94,10 +98,13 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
                 productAdapter = new ProductAdapter(productList);
                 productAdapter.setOnProductClickListener((ProductAdapter.OnProductClickListener) BuyFragment.this);
                 productsRecyclerView.setAdapter(productAdapter);
+
+                loader.setVisibility(View.GONE);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
+                loader.setVisibility(View.GONE);
             }
         });
     }
