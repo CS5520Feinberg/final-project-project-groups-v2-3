@@ -22,6 +22,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -39,7 +40,7 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
             "Date Descending"
     };
 
-    private String selectedSortingOption;
+    private String selectedSortingOption="";
     private List<Product> productList;
 
     @Nullable
@@ -47,10 +48,19 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_buy, container, false);
         productsRecyclerView = rootView.findViewById(R.id.productRecyclerView);
-        sortDropdown(rootView);
-
-
-        productsRecyclerView();
+        if (savedInstanceState != null && savedInstanceState.containsKey("product_list")) {
+            List<Product> savedProductList = (ArrayList<Product>) savedInstanceState.getSerializable("product_list");
+            if (savedProductList != null) {
+                productList = savedProductList;
+            }
+            String sortValue = savedInstanceState.getString("sorting_option");
+            if( !sortValue.equals("")){
+                setDefaultSortingOption(sortValue,rootView);
+            }
+        }else{
+            sortDropdown(rootView);
+            productsRecyclerView();
+        }
         return rootView;
     }
 
@@ -70,7 +80,6 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference productsRef = database.getReference("products");
 
-        // Fetch data from Firebase
         productsRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -83,24 +92,19 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
                 // Create and set up the RecyclerView with the fetched data
                 productsRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(),2));
                 productAdapter = new ProductAdapter(productList);
-
-                // Set the click listener for the adapter
                 productAdapter.setOnProductClickListener((ProductAdapter.OnProductClickListener) BuyFragment.this);
-
                 productsRecyclerView.setAdapter(productAdapter);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Handle database errors if any
             }
         });
     }
 
-
     private void handleSorting(String selectedOption) {
         List<Product> sortedList = new ArrayList<>(productAdapter.getProductList());
-
+        selectedSortingOption = selectedOption;
         switch (selectedOption) {
             case "Price Increasing":
                 Collections.sort(sortedList, Comparator.comparing(Product::getPriceAsDouble));
@@ -125,12 +129,10 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
                 break;
         }
 
-        // Update the RecyclerView with the sorted list
         productAdapter.setProductList(sortedList);
         productAdapter.notifyDataSetChanged();
     }
 
-    // Implement the OnProductClickListener interface method
     @Override
     public void onProductClick(Product product) {
         // Create a new ProductViewFragment and pass the selected product details
@@ -149,5 +151,14 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putSerializable("product_list", (ArrayList<Product>) productAdapter.getProductList());
+        outState.putSerializable("sorting_option", selectedSortingOption);
+    }
+
+    private void setDefaultSortingOption(String defaultOption, View rootView) {
+        AutoCompleteTextView sortDropdown = rootView.findViewById(R.id.sortDropdown);
+        int position = Arrays.asList(sortingOptions).indexOf(defaultOption);
+        if (position >= 0) {
+            sortDropdown.setText(sortingOptions[position], false);
+        }
     }
 }

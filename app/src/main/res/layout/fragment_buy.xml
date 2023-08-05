@@ -22,6 +22,7 @@
         android:layout_height="wrap_content"
         android:hint="Sort By"
         android:paddingStart="5dp"
+        android:text="All Items"
         android:inputType="none" />
 
 </com.google.android.material.textfield.TextInputLayout>
