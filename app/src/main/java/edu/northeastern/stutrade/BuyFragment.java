@@ -11,6 +11,7 @@ import android.widget.AutoCompleteTextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -28,7 +29,7 @@ import java.util.List;
 
 import edu.northeastern.stutrade.Models.Product;
 
-public class BuyFragment extends Fragment {
+public class BuyFragment extends Fragment implements ProductAdapter.OnProductClickListener{
     private RecyclerView productsRecyclerView;
     private ProductAdapter productAdapter;
     private String[] sortingOptions = {
@@ -37,12 +38,23 @@ public class BuyFragment extends Fragment {
             "Date Ascending",
             "Date Descending"
     };
+
+    private String selectedSortingOption;
+    private List<Product> productList;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_buy, container, false);
         productsRecyclerView = rootView.findViewById(R.id.productRecyclerView);
+        sortDropdown(rootView);
 
+
+        productsRecyclerView();
+        return rootView;
+    }
+
+    private void sortDropdown(View rootView){
         ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), R.layout.dropdown_item, sortingOptions);
         AutoCompleteTextView sortDropdown = rootView.findViewById(R.id.sortDropdown);
         sortDropdown.setAdapter(adapter);
@@ -51,8 +63,10 @@ public class BuyFragment extends Fragment {
         sortDropdown.setOnItemClickListener((parent, view, position, id) -> {
             String selectedOption = sortingOptions[position];
             handleSorting(selectedOption);
-
         });
+    }
+
+    private void productsRecyclerView(){
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference productsRef = database.getReference("products");
 
@@ -69,6 +83,10 @@ public class BuyFragment extends Fragment {
                 // Create and set up the RecyclerView with the fetched data
                 productsRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(),2));
                 productAdapter = new ProductAdapter(productList);
+
+                // Set the click listener for the adapter
+                productAdapter.setOnProductClickListener((ProductAdapter.OnProductClickListener) BuyFragment.this);
+
                 productsRecyclerView.setAdapter(productAdapter);
             }
 
@@ -77,9 +95,8 @@ public class BuyFragment extends Fragment {
                 // Handle database errors if any
             }
         });
-
-        return rootView;
     }
+
 
     private void handleSorting(String selectedOption) {
         List<Product> sortedList = new ArrayList<>(productAdapter.getProductList());
@@ -113,5 +130,24 @@ public class BuyFragment extends Fragment {
         productAdapter.notifyDataSetChanged();
     }
 
+    // Implement the OnProductClickListener interface method
+    @Override
+    public void onProductClick(Product product) {
+        // Create a new ProductViewFragment and pass the selected product details
+        ProductViewFragment productViewFragment = new ProductViewFragment();
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("selected_product", product);
+        productViewFragment.setArguments(bundle);
 
+        // Replace the current fragment with the new ProductViewFragment
+        FragmentTransaction fragmentTransaction = requireActivity().getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.replace(R.id.frame_layout, productViewFragment);
+        fragmentTransaction.commit();
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putSerializable("product_list", (ArrayList<Product>) productAdapter.getProductList());
+    }
 }

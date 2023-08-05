@@ -18,6 +18,15 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductViewHolder> {
         this.productList = productList;
     }
 
+    public interface OnProductClickListener {
+        void onProductClick(Product product);
+    }
+
+    private OnProductClickListener productClickListener;
+
+    public void setOnProductClickListener(OnProductClickListener listener) {
+        this.productClickListener = listener;
+    }
     @NonNull
     @Override
     public ProductViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -32,6 +41,12 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductViewHolder> {
         holder.itemName.setText(product.getProductName());
         holder.itemPrice.setText("$" + product.getProductPrice());
         //holder.datePosted.setText("Posted on: " + product.getDatePosted());
+
+        holder.itemView.setOnClickListener(view -> {
+            if (productClickListener != null) {
+                productClickListener.onProductClick(product);
+            }
+        });
     }
 
     @Override

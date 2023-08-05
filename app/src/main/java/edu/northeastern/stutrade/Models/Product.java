@@ -1,17 +1,28 @@
 package edu.northeastern.stutrade.Models;
 
+import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-public class Product {
+public class Product implements Serializable {
     private String productPrice;
     private String productName;
     private String datePosted;
 
     private String location;
     private String productDescription;
+
+    public String getSellerName() {
+        return sellerName;
+    }
+
+    public void setSellerName(String sellerName) {
+        this.sellerName = sellerName;
+    }
+
+    private String sellerName;
 
     public Product(){}
     public Product(String productPrice, String productName, String datePosted, String location, String productDescription) {

@@ -68,6 +68,11 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
 
+                if (currentFragment instanceof ProductViewFragment) {
+                    // Navigate back to BuyFragment
+                    getSupportFragmentManager().popBackStack();
+                }
+
                 // Check if the current activity is the root activity
                 if (isTaskRoot()) {
                     // If it is the root activity, call finish to exit the app
@@ -99,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void replaceFragment(Fragment fragment) {
+        fragment.setRetainInstance(true);
         getSupportFragmentManager().beginTransaction().replace(R.id.frame_layout, fragment).commit();
     }
 }
