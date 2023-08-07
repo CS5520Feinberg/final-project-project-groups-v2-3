@@ -43,6 +43,7 @@ public class ChatFragment extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "username";
     private static final String ARG_PARAM2 = "email";
+    private static final String ARG_PARAM3 = "selectedUserID";
 
     private String username, email;
 
@@ -70,11 +71,12 @@ public class ChatFragment extends Fragment {
      * @param email email.
      * @return A new instance of fragment ChatFragment.
      */
-    public static ChatFragment newInstance(String username, String email) {
+    public static ChatFragment newInstance(String username, String email, String selectedUserID) {
         ChatFragment fragment = new ChatFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, username);
         args.putString(ARG_PARAM2, email);
+        args.putString(ARG_PARAM3, selectedUserID);
         fragment.setArguments(args);
         return fragment;
     }
@@ -85,6 +87,7 @@ public class ChatFragment extends Fragment {
         if (getArguments() != null) {
             username = getArguments().getString(ARG_PARAM1);
             email = getArguments().getString(ARG_PARAM2);
+            selectedUserID = getArguments().getString(ARG_PARAM3);
             userId = email.substring(0, email.indexOf("@"));
         }
     }
@@ -110,6 +113,31 @@ public class ChatFragment extends Fragment {
 
         getUserList(view);
 
+        if (selectedUserID != null && !selectedUserID.isEmpty()) {
+            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference().child("users").child(selectedUserID);
+            userRef.addValueEventListener(new ValueEventListener() {
+                 @Override
+                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                     selectedUsername = dataSnapshot.child("name").getValue(String.class);
+                     tv_chat_with.setText(selectedUsername);
+                     displayUserChat(selectedUserID, view);
+                 }
+                 @Override
+                 public void onCancelled(@NonNull DatabaseError error) {
+
+                 }
+             });
+
+            rv_chat.setVisibility(View.VISIBLE);
+            tv_chat_with.setVisibility(View.VISIBLE);
+            et_message.setVisibility(View.VISIBLE);
+            btn_send.setVisibility(View.VISIBLE);
+
+            sortDropdown.setVisibility(View.GONE);
+            sortDropdownLayout.setVisibility(View.GONE);
+            btn_chat.setVisibility(View.GONE);
+        }
+
         btn_chat.setOnClickListener(v -> {
             rv_chat.setVisibility(View.VISIBLE);
             tv_chat_with.setVisibility(View.VISIBLE);
@@ -130,7 +158,7 @@ public class ChatFragment extends Fragment {
         btn_send.setOnClickListener(v -> {
             String message = et_message.getText().toString().trim();
             if (!message.isEmpty()) {
-                if (!selectedUser.isEmpty()) {
+                if (!selectedUserID.isEmpty()) {
                     // Initialize Firebase Database reference for chat
                     chatToReference = FirebaseDatabase.getInstance().getReference().child("chats")
                             .child(userId).child(selectedUserID).push();
@@ -146,11 +174,15 @@ public class ChatFragment extends Fragment {
                     messageFromMap.put("message", message);
                     messageFromMap.put("isMessageSent", "false");
                     messageFromMap.put("message_time", ServerValue.TIMESTAMP);
+                    messageToMap.put("message_notified", "false");
                     chatFromReference.setValue(messageFromMap);
 
                     // clear the input field
                     et_message.setText("");
                 }
+            }
+            else {
+                Toast.makeText(getContext(), "Please type a message before sending.", Toast.LENGTH_SHORT).show();
             }
         });
         return view;
@@ -257,7 +289,7 @@ public class ChatFragment extends Fragment {
             tv_chat_with.setVisibility(View.GONE);
             et_message.setVisibility(View.GONE);
             btn_send.setVisibility(View.GONE);
-            return true; // Consume the back button press event
+            return true;
         }
         return false; // Let the activity handle the back button press
     }
