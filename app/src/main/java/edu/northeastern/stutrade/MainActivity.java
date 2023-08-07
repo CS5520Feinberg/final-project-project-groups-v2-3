@@ -13,6 +13,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.graphics.Color;
+import android.media.RingtoneManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.widget.TextView;
@@ -200,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
         // Create an intent to clear the notification when the action button is clicked
         Intent clearIntent = new Intent(this, ClearNotificationHandler.class);
         clearIntent.putExtra("notificationId", NOTIFICATION_UNIQUE_ID); // Pass the notification id
-        PendingIntent clearPendingIntent = PendingIntent.getBroadcast(this, 0, clearIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent clearPendingIntent = PendingIntent.getBroadcast(this, 0, clearIntent, PendingIntent.FLAG_IMMUTABLE);
 
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
@@ -209,6 +210,8 @@ public class MainActivity extends AppCompatActivity {
                 .setContentText(message)
                 .setContentIntent(openIntent)
                 .setAutoCancel(true) // Remove the notification when clicked
+                .addAction(R.drawable.clear_icon, "Clear", clearPendingIntent)
+                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
