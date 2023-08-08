@@ -1,8 +1,13 @@
 package edu.northeastern.stutrade;
 
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -18,6 +23,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -32,6 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -57,7 +64,7 @@ public class ChatFragment extends Fragment {
 
     AutoCompleteTextView sortDropdown;
     TextInputLayout sortDropdownLayout;
-
+    private ValueEventListener valueEventListener;
     public ChatFragment() {
         // Required empty public constructor
     }
@@ -124,6 +131,7 @@ public class ChatFragment extends Fragment {
             selectedUserID = selectedUser.substring(selectedUser.indexOf("(") + 1, selectedUser.indexOf(")")).trim();
             tv_chat_with.setText(selectedUsername);
             displayUserChat(selectedUserID, view);
+            setupFirebaseListeners();
         });
 
         // Handle click events for the send button
@@ -154,6 +162,71 @@ public class ChatFragment extends Fragment {
             }
         });
         return view;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        // Initialize your views here if you haven't already...
+
+        // Setup Firebase listeners
+        //setupFirebaseListeners();
+    }
+
+    private void setupFirebaseListeners() {
+        DatabaseReference chatFromReference = FirebaseDatabase.getInstance().getReference().child("chats")
+                .child(selectedUserID).child(userId);
+
+        chatFromReference.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                // You can add further checks to ensure the message is new.
+                if (dataSnapshot.exists()) {
+                    String isMessageSent = dataSnapshot.child("isMessageSent").getValue(String.class);
+                    if ("false".equals(isMessageSent)) {
+                        showNotification("New Message", "You have a new message from " + selectedUsername);
+                    }
+                }
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+            }
+        });
+    }
+
+    private void showNotification(String title, String message) {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(getContext(), "edu.northeastern.stutrade")
+                .setSmallIcon(R.drawable.stutrade_round) // Set your own icon here
+                .setContentTitle(title)
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
+        if (ActivityCompat.checkSelfPermission(requireActivity(), android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        notificationManager.notify(1001, builder.build()); // 1001 is a random notification ID.
     }
 
     // get list of users from the database

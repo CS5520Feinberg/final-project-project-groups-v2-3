@@ -6,6 +6,9 @@ import androidx.fragment.app.Fragment;
 
 import android.app.AlertDialog;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.TextView;
 
@@ -20,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        createNotificationChannel();
         replaceFragment(new BuyFragment());
 
         UserSessionManager sessionManager = new UserSessionManager(getApplicationContext());
@@ -111,5 +115,18 @@ public class MainActivity extends AppCompatActivity {
     void updateUsernameTextView(String newUsername) {
         TextView username_tv = findViewById(R.id.username);
         username_tv.setText(newUsername);
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "edu.northeastern.stutrade";
+            String description = "ChannelDescription";
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel channel = new NotificationChannel("edu.northeastern.stutrade", name, importance);
+            channel.setDescription(description);
+
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
     }
 }
