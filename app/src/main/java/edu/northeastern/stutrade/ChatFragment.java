@@ -38,7 +38,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -131,7 +130,6 @@ public class ChatFragment extends Fragment {
             selectedUserID = selectedUser.substring(selectedUser.indexOf("(") + 1, selectedUser.indexOf(")")).trim();
             tv_chat_with.setText(selectedUsername);
             displayUserChat(selectedUserID, view);
-            setupFirebaseListeners();
         });
 
         // Handle click events for the send button
@@ -145,6 +143,7 @@ public class ChatFragment extends Fragment {
                     Map<String, Object> messageToMap = new HashMap<>();
                     messageToMap.put("message", message);
                     messageToMap.put("isMessageSent", "true");
+                    messageToMap.put("isMessageRead", "true");
                     messageToMap.put("message_time", ServerValue.TIMESTAMP);
                     chatToReference.setValue(messageToMap);
 
@@ -153,6 +152,7 @@ public class ChatFragment extends Fragment {
                     Map<String, Object> messageFromMap = new HashMap<>();
                     messageFromMap.put("message", message);
                     messageFromMap.put("isMessageSent", "false");
+                    messageFromMap.put("isMessageRead", "false");
                     messageFromMap.put("message_time", ServerValue.TIMESTAMP);
                     chatFromReference.setValue(messageFromMap);
 
@@ -281,6 +281,10 @@ public class ChatFragment extends Fragment {
                     if(dataSnapshot.exists() && dataSnapshot.hasChildren()) {
                         for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
 
+
+                            DatabaseReference messageReference = snapshot.child("isMessageRead").getRef();
+                            messageReference.setValue("true");
+
                             String isMessageSentString = snapshot.child("isMessageSent").getValue(String.class);
                             boolean isMessageSent = Boolean.parseBoolean(isMessageSentString);
 
@@ -296,6 +300,7 @@ public class ChatFragment extends Fragment {
                             String dateTimeFormat = "yyyy-MM-dd HH:mm:ss";
                             SimpleDateFormat formatter = new SimpleDateFormat(dateTimeFormat, Locale.US);
                             String message_time =  formatter.format(new Date(timestamp));
+
 
                                 chatList.add(new Chat(message, from_user, message_time) {
                                 @Override

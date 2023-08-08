@@ -1,24 +1,37 @@
 package edu.northeastern.stutrade;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.Fragment;
 
 import android.app.AlertDialog;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.widget.TextView;
 
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class MainActivity extends AppCompatActivity {
 
     BottomNavigationView bottomNavigationView;
-
+    private String username;
+    private String email;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -27,8 +40,8 @@ public class MainActivity extends AppCompatActivity {
         replaceFragment(new BuyFragment());
 
         UserSessionManager sessionManager = new UserSessionManager(getApplicationContext());
-        String username = sessionManager.getUsername();
-        String email = sessionManager.getEmail();
+        username = sessionManager.getUsername();
+        email = sessionManager.getEmail();
         TextView username_tv = findViewById(R.id.username);
         username_tv.setText(username);
         bottomNavigationView = findViewById(R.id.bottom_navigation_view);
@@ -55,19 +68,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void handleOnBackPressed() {
                 Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.frame_layout);
-
-                // Check if the current fragment is a ChatFragment
                 if (currentFragment instanceof ChatFragment) {
                     ChatFragment chatFragment = (ChatFragment) currentFragment;
                     if (chatFragment.onBackPressed()) {
-                        // The back button press was handled by the ChatFragment, do nothing further.
                         return;
                     }
                 }
                 if (currentFragment instanceof ProfileFragment) {
                     ProfileFragment profileFragment = (ProfileFragment) currentFragment;
                     if (profileFragment.onBackPressed()) {
-                        // The back button press was handled by the ChatFragment, do nothing further.
                         return;
                     }
                 }
@@ -77,19 +86,16 @@ public class MainActivity extends AppCompatActivity {
                     getSupportFragmentManager().popBackStack();
                 }
 
-                // Check if the current activity is the root activity
                 if (isTaskRoot()) {
-                    // If it is the root activity, call finish to exit the app
-                   // finishAffinity();
                     showExitConfirmationDialog();
                 } else {
-                    // If it's not the root activity, propagate the back press event to the activity stack
                     setEnabled(false);
                     onBackPressed();
                 }
             }
         };
         getOnBackPressedDispatcher().addCallback(this, onBackPressedCallback);
+        setupFirebaseListeners();
     }
 
     private void showExitConfirmationDialog() {
@@ -97,11 +103,9 @@ public class MainActivity extends AppCompatActivity {
                 .setTitle("Exit App")
                 .setMessage("Are you sure you want to exit?")
                 .setPositiveButton("Yes", (dialog, which) -> {
-                    // If the user clicks "Yes", exit the app
                     finishAffinity();
                 })
                 .setNegativeButton("No", (dialog, which) -> {
-                    // If the user clicks "No", dismiss the dialog and continue with the app
                     dialog.dismiss();
                 })
                 .show();
@@ -128,5 +132,51 @@ public class MainActivity extends AppCompatActivity {
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
+    }
+
+    private void setupFirebaseListeners() {
+        DatabaseReference chatFromReference = FirebaseDatabase.getInstance().getReference().child("chats")
+                .child(email.substring(0, email.indexOf("@")));
+        chatFromReference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot parentSnapshot : dataSnapshot.getChildren()) {
+                    boolean hasUnreadMessage = false;
+
+                    for (DataSnapshot childSnapshot : parentSnapshot.getChildren()) {
+                        String isMessageRead = childSnapshot.child("isMessageRead").getValue(String.class);
+                        if ("false".equals(isMessageRead)) {
+                            hasUnreadMessage = true;
+                            break;
+                        }
+                    }
+
+                    if (hasUnreadMessage) {
+                        String parentKey = parentSnapshot.getKey();
+                        showNotification("New Message", "You have a new message from " + parentKey);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Handle errors if needed
+            }
+        });
+
+    }
+
+    private void showNotification(String title, String message) {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "edu.northeastern.stutrade")
+                .setSmallIcon(R.drawable.stutrade_round) // Set your own icon here
+                .setContentTitle(title)
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        notificationManager.notify(1001, builder.build());
     }
 }
