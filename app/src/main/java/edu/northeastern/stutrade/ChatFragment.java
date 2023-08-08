@@ -166,6 +166,7 @@ public class ChatFragment extends Fragment {
                     messageToMap.put("message", message);
                     messageToMap.put("isMessageSent", "true");
                     messageToMap.put("message_time", ServerValue.TIMESTAMP);
+                    messageToMap.put("name", selectedUsername);
                     chatToReference.setValue(messageToMap);
 
                     DatabaseReference chatFromReference = FirebaseDatabase.getInstance().getReference().child("chats")
@@ -174,7 +175,8 @@ public class ChatFragment extends Fragment {
                     messageFromMap.put("message", message);
                     messageFromMap.put("isMessageSent", "false");
                     messageFromMap.put("message_time", ServerValue.TIMESTAMP);
-                    messageToMap.put("message_notified", "false");
+                    messageFromMap.put("message_notified", "false");
+                    messageFromMap.put("name", username);
                     chatFromReference.setValue(messageFromMap);
 
                     // clear the input field

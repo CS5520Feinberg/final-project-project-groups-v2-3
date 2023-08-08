@@ -33,6 +33,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int NOTIFICATION_UNIQUE_ID = 1;
     public static final String EXTRA_FRAGMENT_TYPE = "fragment_type";
     public static final String MESSAGE_TO_USER = "message_to_user";
+    TextView username_tv;
+    String username;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,9 +43,9 @@ public class MainActivity extends AppCompatActivity {
         //replaceFragment(new BuyFragment());
 
         UserSessionManager sessionManager = new UserSessionManager(getApplicationContext());
-        String username = sessionManager.getUsername();
+        username = sessionManager.getUsername();
         String email = sessionManager.getEmail();
-        TextView username_tv = findViewById(R.id.username);
+        username_tv = findViewById(R.id.username);
         username_tv.setText(username);
 
         Intent intent = getIntent();
@@ -79,8 +81,8 @@ public class MainActivity extends AppCompatActivity {
 
         createNotificationChannel();
         String userId = email.substring(0, email.indexOf("@"));
-        DatabaseReference chatToReference = FirebaseDatabase.getInstance().getReference().child("chats").child(userId);
-        chatToReference.addValueEventListener(new ValueEventListener() {
+        DatabaseReference chatReference = FirebaseDatabase.getInstance().getReference().child("chats").child(userId);
+        chatReference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists() && dataSnapshot.hasChildren()) {
@@ -94,9 +96,10 @@ public class MainActivity extends AppCompatActivity {
 
                             if (!isMessageNotified && !isMessageSent) {
                                 String message = messageId.child("message").getValue(String.class);
-                                String messageFromUser = String.valueOf(fromUser.getKey());
-                                messageNotification(messageFromUser, message);
-                                chatToReference.child(messageFromUser).
+                                String fromUserId = String.valueOf(fromUser.getKey());
+                                String fromUsername = messageId.child("name").getValue(String.class);
+                                messageNotification(fromUserId, fromUsername, message);
+                                chatReference.child(fromUserId).
                                         child(String.valueOf(messageId.getKey())).
                                         child("message_notified").setValue("true");
                             }
@@ -173,8 +176,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void updateUsernameTextView(String newUsername) {
-        TextView username_tv = findViewById(R.id.username);
         username_tv.setText(newUsername);
+        username = newUsername;
     }
 
     private void createNotificationChannel() {
@@ -192,7 +195,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void messageNotification(String fromUser, String message) {
+    private void messageNotification(String fromUser, String fromUsername, String message) {
         Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra(MainActivity.EXTRA_FRAGMENT_TYPE, "chat_fragment");
         intent.putExtra(MainActivity.MESSAGE_TO_USER, fromUser);
@@ -206,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_chat)
-                .setContentTitle("New Message from " + fromUser)
+                .setContentTitle("New Message from " + fromUsername)
                 .setContentText(message)
                 .setContentIntent(openIntent)
                 .setAutoCancel(true) // Remove the notification when clicked
