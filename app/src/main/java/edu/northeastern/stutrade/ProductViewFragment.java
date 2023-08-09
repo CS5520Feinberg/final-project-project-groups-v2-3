@@ -14,12 +14,14 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import edu.northeastern.stutrade.Models.Product;
+import edu.northeastern.stutrade.Models.ProductViewModel;
 
 public class ProductViewFragment extends Fragment {
     private Product selectedProduct;
-
+    ProductViewModel productViewModel;
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -63,6 +65,8 @@ public class ProductViewFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        productViewModel = new ViewModelProvider(requireActivity()).get(ProductViewModel.class);
+        productViewModel.setisProductSelected(true);
         view.setFocusableInTouchMode(true);
         view.requestFocus();
         view.setOnKeyListener((v, keyCode, event) -> {
