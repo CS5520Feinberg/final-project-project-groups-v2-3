@@ -13,9 +13,12 @@ import android.app.AlertDialog;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.widget.TextView;
 
 
@@ -32,11 +35,11 @@ public class MainActivity extends AppCompatActivity {
     BottomNavigationView bottomNavigationView;
     private String username;
     private String email;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        createNotificationChannel();
         replaceFragment(new BuyFragment());
 
         UserSessionManager sessionManager = new UserSessionManager(getApplicationContext());
@@ -48,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
         bottomNavigationView.setOnItemSelectedListener(item -> {
                     int id = item.getItemId();
                     if (id == R.id.navigation_sell) {
-                       replaceFragment(new SellerFragment());
+                        replaceFragment(new SellerFragment());
                         return true;
                     } else if (id == R.id.navigation_buy) {
                         replaceFragment(new BuyFragment());
@@ -63,6 +66,8 @@ public class MainActivity extends AppCompatActivity {
                     return true;
                 }
         );
+
+
 
         OnBackPressedCallback onBackPressedCallback = new OnBackPressedCallback(true) {
             @Override
@@ -95,7 +100,29 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         getOnBackPressedDispatcher().addCallback(this, onBackPressedCallback);
+        createNotificationChannel();
+
         setupFirebaseListeners();
+        if (getIntent().getStringExtra("notificationAction") != null) {
+            String action = getIntent().getStringExtra("notificationAction");
+            if (action.equals("openChat")) {
+                String parentKey = getIntent().getStringExtra("parentKey");
+                openChatFragment(parentKey);
+            }
+        }
+    }
+
+    private void openChatFragment(String parentKey) {
+        // Create a new instance of ChatFragment with the required arguments
+        UserSessionManager sessionManager = new UserSessionManager(getApplicationContext());
+        ChatFragment chatFragment = ChatFragment.newInstance(sessionManager.getUsername(), sessionManager.getEmail(), parentKey,"true");
+        MenuItem chatMenuItem = bottomNavigationView.getMenu().findItem(R.id.navigation_chat);
+        chatMenuItem.setChecked(true);
+        // Perform fragment transaction to open ChatFragment
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.frame_layout, chatFragment)
+                .addToBackStack(null)
+                .commit();
     }
 
     private void showExitConfirmationDialog() {
@@ -153,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
 
                     if (hasUnreadMessage) {
                         String parentKey = parentSnapshot.getKey();
-                        showNotification("New Message", "You have a new message from " + parentKey);
+                        showNotificationWithIntent("New Message", "You have a new message from " + parentKey, parentKey);
                     }
                 }
             }
@@ -165,17 +192,27 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void showNotification(String title, String message) {
+    private void showNotificationWithIntent(String title, String message, String parentKey) {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.putExtra("notificationAction", "openChat");
+        intent.putExtra("parentKey", parentKey);
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "edu.northeastern.stutrade")
-                .setSmallIcon(R.drawable.stutrade_round) // Set your own icon here
+                .setSmallIcon(R.drawable.stutrade_round)
                 .setContentTitle(title)
                 .setContentText(message)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true);
 
+        // Show the notification
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
             return;
         }
-        notificationManager.notify(1001, builder.build());
+        notificationManager.notify(1005, builder.build());
     }
 }

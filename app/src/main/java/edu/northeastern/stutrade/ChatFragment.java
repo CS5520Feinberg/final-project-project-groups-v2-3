@@ -49,7 +49,8 @@ public class ChatFragment extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "username";
     private static final String ARG_PARAM2 = "email";
-
+    private static final String ARG_PARAM3 = "receiverId";
+    private static final String ARG_PARAM4 = "isNotification";
     private String username, email;
 
     private RecyclerView rv_chat;
@@ -60,6 +61,7 @@ public class ChatFragment extends Fragment {
     private DatabaseReference chatToReference;
     private List<Chat> chatList;
     String userId, selectedUser, selectedUsername, selectedUserID;
+    private  String isFromNotification;
 
     AutoCompleteTextView sortDropdown;
     TextInputLayout sortDropdownLayout;
@@ -85,6 +87,16 @@ public class ChatFragment extends Fragment {
         return fragment;
     }
 
+    public static ChatFragment newInstance(String username, String email, String userid, String isFromNotification) {
+        ChatFragment fragment = new ChatFragment();
+        Bundle args = new Bundle();
+        args.putString(ARG_PARAM1, username);
+        args.putString(ARG_PARAM2, email);
+        args.putString(ARG_PARAM3, userid);
+        args.putString(ARG_PARAM4, isFromNotification);
+        fragment.setArguments(args);
+        return fragment;
+    }
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -92,6 +104,9 @@ public class ChatFragment extends Fragment {
             username = getArguments().getString(ARG_PARAM1);
             email = getArguments().getString(ARG_PARAM2);
             userId = email.substring(0, email.indexOf("@"));
+            selectedUserID = getArguments().getString(ARG_PARAM3);
+            isFromNotification = getArguments().getString(ARG_PARAM4);
+
         }
     }
 
@@ -117,19 +132,8 @@ public class ChatFragment extends Fragment {
         getUserList(view);
 
         btn_chat.setOnClickListener(v -> {
-            rv_chat.setVisibility(View.VISIBLE);
-            tv_chat_with.setVisibility(View.VISIBLE);
-            et_message.setVisibility(View.VISIBLE);
-            btn_send.setVisibility(View.VISIBLE);
+            displayChat(view);
 
-            sortDropdown.setVisibility(View.GONE);
-            sortDropdownLayout.setVisibility(View.GONE);
-            btn_chat.setVisibility(View.GONE);
-
-            selectedUsername = selectedUser.substring(0, selectedUser.indexOf("(")).trim();
-            selectedUserID = selectedUser.substring(selectedUser.indexOf("(") + 1, selectedUser.indexOf(")")).trim();
-            tv_chat_with.setText(selectedUsername);
-            displayUserChat(selectedUserID, view);
         });
 
         // Handle click events for the send button
@@ -161,72 +165,37 @@ public class ChatFragment extends Fragment {
                 }
             }
         });
+        if("true".equals(isFromNotification)){
+            displayChat(view);
+            //return view;
+        }
         return view;
+    }
+
+    private void displayChat(View view){
+        rv_chat.setVisibility(View.VISIBLE);
+        tv_chat_with.setVisibility(View.VISIBLE);
+        et_message.setVisibility(View.VISIBLE);
+        btn_send.setVisibility(View.VISIBLE);
+
+        sortDropdown.setVisibility(View.GONE);
+        sortDropdownLayout.setVisibility(View.GONE);
+        btn_chat.setVisibility(View.GONE);
+        if("true".equals(isFromNotification)){
+            selectedUsername = selectedUserID;
+
+        }else{
+            selectedUsername = selectedUser.substring(0, selectedUser.indexOf("(")).trim();
+            selectedUserID = selectedUser.substring(selectedUser.indexOf("(") + 1, selectedUser.indexOf(")")).trim();
+        }
+
+        tv_chat_with.setText(selectedUsername);
+        displayUserChat(selectedUserID, view);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        // Initialize your views here if you haven't already...
-
-        // Setup Firebase listeners
-        //setupFirebaseListeners();
-    }
-
-    private void setupFirebaseListeners() {
-        DatabaseReference chatFromReference = FirebaseDatabase.getInstance().getReference().child("chats")
-                .child(selectedUserID).child(userId);
-
-        chatFromReference.addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                // You can add further checks to ensure the message is new.
-                if (dataSnapshot.exists()) {
-                    String isMessageSent = dataSnapshot.child("isMessageSent").getValue(String.class);
-                    if ("false".equals(isMessageSent)) {
-                        showNotification("New Message", "You have a new message from " + selectedUsername);
-                    }
-                }
-            }
-
-            @Override
-            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-            }
-
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-            }
-
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-            }
-        });
-    }
-
-    private void showNotification(String title, String message) {
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(getContext(), "edu.northeastern.stutrade")
-                .setSmallIcon(R.drawable.stutrade_round) // Set your own icon here
-                .setContentTitle(title)
-                .setContentText(message)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
-
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getContext());
-        if (ActivityCompat.checkSelfPermission(requireActivity(), android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        notificationManager.notify(1001, builder.build()); // 1001 is a random notification ID.
     }
 
     // get list of users from the database
