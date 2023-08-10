@@ -30,6 +30,7 @@ public class SellerFragment extends Fragment {
     private EditText productNameEditText, descriptionEditText, priceEditText;
     private Button captureButton, galleryButton, uploadButton;
     private ImageView selectedImageView;
+
     private List<Uri> selectedImageUris = new ArrayList<>();
     private DatabaseReference databaseReference;
     private StorageReference storageReference;
