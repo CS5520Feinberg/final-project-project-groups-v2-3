@@ -69,6 +69,7 @@ public class SellerFragment extends Fragment {
         }
     }
 
+
     private void uploadProduct() {
         progressDialog = new ProgressDialog(getContext());
         progressDialog.setTitle("Uploading File....");
