@@ -9,11 +9,19 @@ import java.util.Locale;
 
 public class Product implements Serializable {
     private String productPrice;
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
     private String productName;
     private String datePosted;
 
     private String location;
     private String productDescription;
+
+
+    private String userId;
 
     public String getSellerName() {
         return sellerName;
@@ -24,7 +32,7 @@ public class Product implements Serializable {
     }
 
     private String sellerName;
-    private List<String> imageUrls; // List of image URLs
+    private List<String> imageUrls;
 
 
     public Product(){}
