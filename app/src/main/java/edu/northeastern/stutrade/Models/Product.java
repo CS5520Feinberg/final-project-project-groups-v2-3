@@ -10,6 +10,13 @@ import java.util.Locale;
 public class Product implements Serializable {
     private String productPrice;
 
+    public Product(String name, String description, String price, String imageUrl) {
+        this.productName = name;
+        this.productDescription=description;
+        this.productPrice = price;
+        this.imageUrl = imageUrl;
+    }
+
     public void setProductName(String productName) {
         this.productName = productName;
     }
@@ -20,6 +27,14 @@ public class Product implements Serializable {
     private String location;
     private String productDescription;
 
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
 
     private String userId;
 
@@ -33,6 +48,16 @@ public class Product implements Serializable {
 
     private String sellerName;
     private List<String> imageUrls;
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    private String imageUrl;
 
 
     public Product(){}

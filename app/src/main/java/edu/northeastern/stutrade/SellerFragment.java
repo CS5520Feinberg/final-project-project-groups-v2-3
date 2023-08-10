@@ -8,31 +8,40 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import edu.northeastern.stutrade.Models.Product;
+
 public class SellerFragment extends Fragment {
 
     private Button galleryButton, uploadButton;
+    String userName, userId;
     private List<Uri> selectedImageUris = new ArrayList<>();
     private DatabaseReference databaseReference;
+
     private StorageReference storageReference;
     private List<ImageView> imageViews = new ArrayList<>();
     ProgressDialog progressDialog;
     private Button selectImageButton;
     private LinearLayout imageContainer;
+    private EditText productNameEditText, productDescriptionEditText, productPriceEditText;
 
 
     @Override
@@ -44,6 +53,10 @@ public class SellerFragment extends Fragment {
         storageReference = FirebaseStorage.getInstance().getReference();
         selectImageButton = view.findViewById(R.id.selectImagebtn);
         imageContainer = view.findViewById(R.id.imageContainer);
+        productNameEditText = view.findViewById(R.id.productNameEditText);
+        productDescriptionEditText = view.findViewById(R.id.productDescriptionEditText);
+        productPriceEditText = view.findViewById(R.id.productPriceEditText);
+
 
         galleryButton.setOnClickListener(v -> selectImages());
         uploadButton.setOnClickListener(v -> uploadProducts());
@@ -100,6 +113,13 @@ public class SellerFragment extends Fragment {
 
 
     private void uploadProducts() {
+        String productName = productNameEditText.getText().toString().trim();
+        String productDescription = productDescriptionEditText.getText().toString().trim();
+        String productPrice = productPriceEditText.getText().toString().trim();
+        if (productName.isEmpty() || productDescription.isEmpty() || productPrice.isEmpty() || selectedImageUris.size() == 0) {
+            Toast.makeText(getContext(), "Please fill in all fields", Toast.LENGTH_SHORT).show();
+            return;
+        }
         progressDialog = new ProgressDialog(getContext());
         progressDialog.setTitle("Uploading Files....");
         progressDialog.show();
@@ -108,16 +128,20 @@ public class SellerFragment extends Fragment {
         Date now = new Date();
         UserSessionManager sessionManager = new UserSessionManager(getContext());
         String email = sessionManager.getEmail();
-        String userName = email.substring(0, email.indexOf("@"));
+        userName = sessionManager.getUsername();
+        userId = email.substring(0, email.indexOf("@"));
         for (int i = 0; i < selectedImageUris.size(); i++) {
             String fileName = formatter.format(now) + "_" + i;
-            StorageReference imageStorageRef = FirebaseStorage.getInstance().getReference("images/" + userName+"/"+fileName);
+            StorageReference imageStorageRef = FirebaseStorage.getInstance().getReference("images/" + userName + "/" + fileName);
             // Upload the image using the newly created storageReference
             final int finalI = i;
             imageStorageRef.putFile(selectedImageUris.get(i))
                     .addOnSuccessListener(taskSnapshot -> {
                         if (finalI == selectedImageUris.size() - 1) {
+                            String imageUrl = taskSnapshot.getStorage().getDownloadUrl().toString();
+                            saveProductToDatabase(productName, productDescription, productPrice, imageUrl);
                             Toast.makeText(getContext(), "All Images Uploaded", Toast.LENGTH_SHORT).show();
+
                             if (progressDialog.isShowing())
                                 progressDialog.dismiss();
                         }
@@ -127,5 +151,27 @@ public class SellerFragment extends Fragment {
                         Toast.makeText(getContext(), "Failed to Upload Image " + (finalI + 1), Toast.LENGTH_SHORT).show();
                     });
         }
+    }
+
+    private void saveProductToDatabase(String name, String description, String price, String imageUrl) {
+        // Create a Product object and save it to the database
+        Product product = new Product(name, description, price, imageUrl);
+        product.setUserId(userId);
+        product.setName(userName);
+        product.setDatePosted(String.valueOf(new Date()));
+        String productId = databaseReference.push().getKey(); // Generate a unique ID
+        databaseReference.child(productId).setValue(product)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(getContext(), "Product uploaded successfully", Toast.LENGTH_SHORT).show();
+                    progressDialog.dismiss();
+                    // Clear the fields
+                    productNameEditText.setText("");
+                    productDescriptionEditText.setText("");
+                    productPriceEditText.setText("");
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Failed to upload product", Toast.LENGTH_SHORT).show();
+                    progressDialog.dismiss();
+                });
     }
 }
