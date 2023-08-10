@@ -75,6 +75,7 @@ public class SellerFragment extends Fragment {
         progressDialog.setTitle("Uploading File....");
         progressDialog.show();
 
+
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.CANADA);
         Date now = new Date();
         String fileName = formatter.format(now);
