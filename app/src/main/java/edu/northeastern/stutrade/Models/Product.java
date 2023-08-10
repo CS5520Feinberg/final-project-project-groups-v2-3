@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class Product implements Serializable {
@@ -23,6 +24,8 @@ public class Product implements Serializable {
     }
 
     private String sellerName;
+    private List<String> imageUrls; // List of image URLs
+
 
     public Product(){}
     public Product(String productPrice, String productName, String datePosted, String location, String productDescription) {
@@ -88,5 +91,14 @@ public class Product implements Serializable {
         } catch (ParseException e) {
             return new Date();
         }
+    }
+
+
+    public List<String> getImageUrls() {
+        return imageUrls;
+    }
+
+    public void setImageUrls(List<String> imageUrls) {
+        this.imageUrls = imageUrls;
     }
 }
