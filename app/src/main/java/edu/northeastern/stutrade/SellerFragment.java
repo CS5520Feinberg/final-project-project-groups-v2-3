@@ -36,8 +36,7 @@ public class SellerFragment extends Fragment {
     private List<Uri> selectedImageUris = new ArrayList<>();
     private DatabaseReference databaseReference;
 
-    private StorageReference storageReference;
-    private List<ImageView> imageViews = new ArrayList<>();
+    private StorageReference imageStorageRef;
     ProgressDialog progressDialog;
     private Button selectImageButton;
     private LinearLayout imageContainer;
@@ -50,7 +49,6 @@ public class SellerFragment extends Fragment {
         galleryButton = view.findViewById(R.id.selectImagebtn);
         uploadButton = view.findViewById(R.id.uploadimagebtn);
         databaseReference = FirebaseDatabase.getInstance().getReference("products");
-        storageReference = FirebaseStorage.getInstance().getReference();
         selectImageButton = view.findViewById(R.id.selectImagebtn);
         imageContainer = view.findViewById(R.id.imageContainer);
         productNameEditText = view.findViewById(R.id.productNameEditText);
@@ -132,13 +130,19 @@ public class SellerFragment extends Fragment {
         userId = email.substring(0, email.indexOf("@"));
         for (int i = 0; i < selectedImageUris.size(); i++) {
             String fileName = formatter.format(now) + "_" + i;
-            StorageReference imageStorageRef = FirebaseStorage.getInstance().getReference("images/" + userName + "/" + fileName);
+            imageStorageRef = FirebaseStorage.getInstance().getReference("images/" + userName + "/" + fileName);
             // Upload the image using the newly created storageReference
             final int finalI = i;
             imageStorageRef.putFile(selectedImageUris.get(i))
                     .addOnSuccessListener(taskSnapshot -> {
                         if (finalI == selectedImageUris.size() - 1) {
-                            String imageUrl = taskSnapshot.getStorage().getDownloadUrl().toString();
+                            String imageUrl = getImageURL(imageStorageRef, url -> {
+                                if (url != null) {
+                                    return url;
+                                } else {
+                                    return "";
+                                }
+                            });
                             saveProductToDatabase(productName, productDescription, productPrice, imageUrl);
                             Toast.makeText(getContext(), "All Images Uploaded", Toast.LENGTH_SHORT).show();
 
@@ -151,14 +155,13 @@ public class SellerFragment extends Fragment {
                         Toast.makeText(getContext(), "Failed to Upload Image " + (finalI + 1), Toast.LENGTH_SHORT).show();
                     });
         }
+
     }
 
     private void saveProductToDatabase(String name, String description, String price, String imageUrl) {
         // Create a Product object and save it to the database
-        Product product = new Product(name, description, price, imageUrl);
-        product.setUserId(userId);
-        product.setName(userName);
-        product.setDatePosted(String.valueOf(new Date()));
+
+        Product product = new Product(name, description, price, imageUrl,userName, userId,String.valueOf(new Date()) );
         String productId = databaseReference.push().getKey(); // Generate a unique ID
         databaseReference.child(productId).setValue(product)
                 .addOnSuccessListener(aVoid -> {
@@ -174,4 +177,32 @@ public class SellerFragment extends Fragment {
                     progressDialog.dismiss();
                 });
     }
+
+    private String getImageURL(StorageReference storageReference, OnURLReadyCallback callback) {
+        storageReference.listAll()
+                .addOnSuccessListener(listResult -> {
+                    if (!listResult.getItems().isEmpty()) {
+                        listResult.getItems().get(0).getDownloadUrl()
+                                .addOnSuccessListener(uri -> {
+                                    String url = uri.toString();
+                                    callback.onURLReady(url);
+                                })
+                                .addOnFailureListener(e -> {
+                                    callback.onURLReady(null); // Pass null if there's a failure
+                                });
+                    } else {
+                        callback.onURLReady(null); // Pass null if no items are available
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    callback.onURLReady(null); // Pass null if there's a failure
+                });
+        return null;
+    }
+
+    // Define the callback interface
+    interface OnURLReadyCallback {
+        String onURLReady(String url);
+    }
+
 }

@@ -9,45 +9,41 @@ import java.util.Locale;
 
 public class Product implements Serializable {
     private String productPrice;
+    private String sellerId;
+    private String productName;
+    private String datePosted;
+    private String productDescription;
+    private String sellerName;
+    private String imageUrl;
 
-    public Product(String name, String description, String price, String imageUrl) {
-        this.productName = name;
-        this.productDescription=description;
+    public Product() {
+    }
+
+    public Product(String productName, String description, String price, String imageUrl, String sellerName, String sellerId, String datePosted) {
+        this.productName = productName;
+        this.productDescription = description;
         this.productPrice = price;
         this.imageUrl = imageUrl;
+        this.sellerName = sellerName;
+        this.datePosted = datePosted;
+        this.sellerId = sellerId;
     }
 
     public void setProductName(String productName) {
         this.productName = productName;
     }
 
-    private String productName;
-    private String datePosted;
-
-    private String location;
-    private String productDescription;
-
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    private String userId;
-
-    public String getSellerName() {
-        return sellerName;
+    public void setSellerId(String userId) {
+        this.sellerId = userId;
     }
 
     public void setSellerName(String sellerName) {
         this.sellerName = sellerName;
     }
 
-    private String sellerName;
-    private List<String> imageUrls;
+    public String getSellerName() {
+        return sellerName;
+    }
 
     public String getImageUrl() {
         return imageUrl;
@@ -57,20 +53,12 @@ public class Product implements Serializable {
         this.imageUrl = imageUrl;
     }
 
-    private String imageUrl;
-
-
-    public Product(){}
-    public Product(String productPrice, String productName, String datePosted, String location, String productDescription) {
-        this.productPrice = productPrice;
-        this.productName = productName;
-        this.datePosted = datePosted;
-        this.location = location;
-        this.productDescription = productDescription;
-    }
-
     public String getProductPrice() {
         return productPrice;
+    }
+
+    public String getSellerId() {
+        return sellerId;
     }
 
     public void setProductPrice(String productPrice) {
@@ -91,14 +79,6 @@ public class Product implements Serializable {
 
     public void setDatePosted(String datePosted) {
         this.datePosted = datePosted;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
     }
 
     public String getProductDescription() {
@@ -126,12 +106,4 @@ public class Product implements Serializable {
         }
     }
 
-
-    public List<String> getImageUrls() {
-        return imageUrls;
-    }
-
-    public void setImageUrls(List<String> imageUrls) {
-        this.imageUrls = imageUrls;
-    }
 }
