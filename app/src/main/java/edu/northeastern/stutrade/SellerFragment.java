@@ -55,7 +55,6 @@ public class SellerFragment extends Fragment {
         productDescriptionEditText = view.findViewById(R.id.productDescriptionEditText);
         productPriceEditText = view.findViewById(R.id.productPriceEditText);
 
-
         galleryButton.setOnClickListener(v -> selectImages());
         uploadButton.setOnClickListener(v -> uploadProducts());
 
