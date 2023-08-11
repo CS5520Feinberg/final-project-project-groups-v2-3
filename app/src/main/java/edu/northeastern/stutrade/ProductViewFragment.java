@@ -3,6 +3,7 @@ package edu.northeastern.stutrade;
 import android.app.Dialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -15,6 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
@@ -56,7 +58,7 @@ public class ProductViewFragment extends Fragment {
             sellerNameTextView.setText(selectedProduct.getSellerName());
             productPriceTextView.setText(String.valueOf(selectedProduct.getProductPrice()));
             Picasso.get().load(selectedProduct.getImageUrl()).into(productImageView);
-            // chatButton.setOnClickListener(view -> {});
+            chatButton.setOnClickListener(view -> openChatFragment());
 
         }
 
@@ -107,5 +109,18 @@ public class ProductViewFragment extends Fragment {
         imagePopup.show();
     }
 
+    private void openChatFragment() {
+        // Create a new instance of ChatFragment with the required arguments
+        UserSessionManager sessionManager = new UserSessionManager(getContext());
+        ChatFragment chatFragment = ChatFragment.newInstance(sessionManager.getUsername(), sessionManager.getEmail(), selectedProduct.getSellerId());
+        BottomNavigationView bottomNavigationView = getActivity().findViewById(R.id.bottom_navigation_view);
+        MenuItem chatMenuItem = bottomNavigationView.getMenu().findItem(R.id.navigation_chat);
+        chatMenuItem.setChecked(true);
+        // Perform fragment transaction to open ChatFragment
+        requireActivity().getSupportFragmentManager().beginTransaction()
+                .replace(R.id.frame_layout, chatFragment)
+                .addToBackStack(null)
+                .commit();
+    }
 
 }
