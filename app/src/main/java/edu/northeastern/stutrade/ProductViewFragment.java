@@ -1,7 +1,6 @@
 package edu.northeastern.stutrade;
 
 import android.app.Dialog;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,6 +20,7 @@ import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
+import java.util.Objects;
 
 import edu.northeastern.stutrade.Models.Product;
 
@@ -34,18 +34,17 @@ public class ProductViewFragment extends Fragment {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
         View rootView = inflater.inflate(R.layout.fragment_product_view, container, false);
-        UserSessionManager sessionManager = new UserSessionManager(getContext());
+        UserSessionManager sessionManager = new UserSessionManager(requireContext());
         String email = sessionManager.getEmail();
         String userName = email.substring(0, email.indexOf("@"));
         FirebaseStorage storage = FirebaseStorage.getInstance();
         //remove username to sellerusername
-        storageReference = storage.getReference("images/" + userName + "/");
         Bundle args = getArguments();
         if (args != null && args.containsKey("selected_product")) {
             selectedProduct = (Product) args.getSerializable("selected_product");
-
         }
         if (selectedProduct != null) {
+            storageReference = storage.getReference("images/" + selectedProduct.getSellerId() + "/" + selectedProduct.getProductName());
             ImageView productImageView = rootView.findViewById(R.id.productImageView);
             TextView productDescriptionTextView = rootView.findViewById(R.id.productDescriptionTextView);
             TextView datePostedTextView = rootView.findViewById(R.id.datePostedTextView);
@@ -56,8 +55,7 @@ public class ProductViewFragment extends Fragment {
             datePostedTextView.setText(selectedProduct.getDatePosted());
             sellerNameTextView.setText(selectedProduct.getSellerName());
             productPriceTextView.setText(String.valueOf(selectedProduct.getProductPrice()));
-            loadFirstImageFromStorage(storageReference, productImageView);
-
+            Picasso.get().load(selectedProduct.getImageUrl()).into(productImageView);
             // chatButton.setOnClickListener(view -> {});
 
         }
@@ -65,23 +63,6 @@ public class ProductViewFragment extends Fragment {
         ImageView productImageView = rootView.findViewById(R.id.productImageView);
         productImageView.setOnClickListener(v -> showImagePopup());
         return rootView;
-    }
-
-    private void loadFirstImageFromStorage(StorageReference storageReference, ImageView productImageView) {
-        storageReference.listAll()
-                .addOnSuccessListener(listResult -> {
-                    List<StorageReference> items = listResult.getItems();
-                    if (!items.isEmpty()) {
-                        StorageReference firstItem = items.get(0);
-                        firstItem.getDownloadUrl().addOnSuccessListener(uri -> {
-                            String imageUrl = uri.toString();
-                            Picasso.get().load(imageUrl).into(productImageView);
-                        });
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(getContext(), "Unable to load images", Toast.LENGTH_SHORT).show();
-                });
     }
 
     @Override

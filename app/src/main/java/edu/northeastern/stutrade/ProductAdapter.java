@@ -7,6 +7,8 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.squareup.picasso.Picasso;
+
 import java.util.List;
 
 import edu.northeastern.stutrade.Models.Product;
@@ -40,6 +42,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductViewHolder> {
         Product product = productList.get(position);
         holder.itemName.setText(product.getProductName());
         holder.itemPrice.setText("$" + product.getProductPrice());
+        Picasso.get().load(product.getImageUrl()).into(holder.itemImage);
         //holder.datePosted.setText("Posted on: " + product.getDatePosted());
 
         holder.itemView.setOnClickListener(view -> {

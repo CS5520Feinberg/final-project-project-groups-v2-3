@@ -55,7 +55,6 @@ public class MainActivity extends AppCompatActivity {
         if (messageToUser != null && !messageToUser.isEmpty() && "chat_fragment".equals(fragmentType)) {
             replaceFragment(ChatFragment.newInstance(username, email, messageToUser));
         } else {
-            // If no specific fragment type provided, replace with BuyFragment (default)
             replaceFragment(new BuyFragment());
         }
 
@@ -118,19 +117,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void handleOnBackPressed() {
                 Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.frame_layout);
-
-                // Check if the current fragment is a ChatFragment
                 if (currentFragment instanceof ChatFragment) {
                     ChatFragment chatFragment = (ChatFragment) currentFragment;
                     if (chatFragment.onBackPressed()) {
-                        // The back button press was handled by the ChatFragment, do nothing further.
                         return;
                     }
                 }
                 if (currentFragment instanceof ProfileFragment) {
                     ProfileFragment profileFragment = (ProfileFragment) currentFragment;
                     if (profileFragment.onBackPressed()) {
-                        // The back button press was handled by the ChatFragment, do nothing further.
                         return;
                     }
                 }
@@ -140,13 +135,9 @@ public class MainActivity extends AppCompatActivity {
                     getSupportFragmentManager().popBackStack();
                 }
 
-                // Check if the current activity is the root activity
                 if (isTaskRoot()) {
-                    // If it is the root activity, call finish to exit the app
-                   // finishAffinity();
                     showExitConfirmationDialog();
                 } else {
-                    // If it's not the root activity, propagate the back press event to the activity stack
                     setEnabled(false);
                     onBackPressed();
                 }
