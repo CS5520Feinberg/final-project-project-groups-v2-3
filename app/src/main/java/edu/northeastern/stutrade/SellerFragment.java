@@ -15,6 +15,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.Locale;
 
 import edu.northeastern.stutrade.Models.Product;
+import edu.northeastern.stutrade.Models.ProductViewModel;
 
 public class SellerFragment extends Fragment {
 
@@ -46,6 +48,10 @@ public class SellerFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_seller, container, false);
+
+        ProductViewModel productViewModel = new ViewModelProvider(requireActivity()).get(ProductViewModel.class);
+        productViewModel.setCurrentFragment("seller_fragment");
+
         galleryButton = view.findViewById(R.id.selectImagebtn);
         uploadButton = view.findViewById(R.id.uploadimagebtn);
         databaseReference = FirebaseDatabase.getInstance().getReference("products");

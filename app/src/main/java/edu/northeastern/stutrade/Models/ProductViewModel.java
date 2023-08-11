@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel;
 public class ProductViewModel extends ViewModel {
     private MutableLiveData<Product> selectedProduct = new MutableLiveData<>();
     private MutableLiveData<Boolean> isProductSelected = new MutableLiveData<>();
+    private MutableLiveData<String> currentFragment = new MutableLiveData<>();
 
     public LiveData<Product> getSelectedProduct() {
         return selectedProduct;
@@ -23,4 +24,10 @@ public class ProductViewModel extends ViewModel {
     public void setIsProductSelected(Boolean value) {
         isProductSelected.setValue(value);
     }
+
+    public LiveData<String> getCurrentFragment() {
+        return currentFragment;
+    }
+
+    public void setCurrentFragment (String value) {currentFragment.setValue(value);    }
 }

@@ -14,6 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.provider.MediaStore;
 import android.view.LayoutInflater;
@@ -40,6 +41,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+
+import edu.northeastern.stutrade.Models.ProductViewModel;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -104,6 +107,9 @@ public class ProfileFragment extends Fragment {
             username = getArguments().getString(ARG_PARAM1);
             email = getArguments().getString(ARG_PARAM2);
         }
+
+        ProductViewModel productViewModel = new ViewModelProvider(requireActivity()).get(ProductViewModel.class);
+        productViewModel.setCurrentFragment("profile_fragment");
     }
 
     @Override

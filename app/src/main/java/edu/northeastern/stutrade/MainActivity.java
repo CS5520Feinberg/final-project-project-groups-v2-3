@@ -5,6 +5,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import android.app.AlertDialog;
@@ -27,6 +29,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import edu.northeastern.stutrade.Models.Product;
 import edu.northeastern.stutrade.Models.ProductViewModel;
 
 public class MainActivity extends AppCompatActivity {
@@ -38,13 +41,14 @@ public class MainActivity extends AppCompatActivity {
     public static final String MESSAGE_TO_USER = "message_to_user";
     TextView username_tv;
     String username;
+    private ProductViewModel productViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //replaceFragment(new BuyFragment());
-        ProductViewModel productViewModel = new ViewModelProvider(this).get(ProductViewModel.class);
+
+
         UserSessionManager sessionManager = new UserSessionManager(getApplicationContext());
         username = sessionManager.getUsername();
         String email = sessionManager.getEmail();
@@ -54,10 +58,32 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = getIntent();
         String fragmentType = intent.getStringExtra(EXTRA_FRAGMENT_TYPE);
         String messageToUser = intent.getStringExtra(MESSAGE_TO_USER);
-
+        ProductViewModel productViewModel = new ViewModelProvider(this).get(ProductViewModel.class);
         if (messageToUser != null && !messageToUser.isEmpty() && "chat_fragment".equals(fragmentType)) {
             replaceFragment(ChatFragment.newInstance(username, email, messageToUser));
-        } else {
+        }else if(productViewModel.getCurrentFragment().getValue()!=null){
+            productViewModel.getCurrentFragment().observe(this, fragmentValue -> {
+                if (fragmentValue != null) {
+                    FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+                    switch (fragmentValue) {
+                        case "chat_fragment":
+                            transaction.replace(R.id.frame_layout, new ChatFragment());
+                            break;
+                        case "buy_fragment":
+                            transaction.replace(R.id.frame_layout, new BuyFragment());
+                            break;
+                        case "seller_fragment":
+                            transaction.replace(R.id.frame_layout, new SellerFragment());
+                            break;
+                        case "profile_fragment":
+                            transaction.replace(R.id.frame_layout, new ProfileFragment());
+                            break;
+                        default:
+                            transaction.replace(R.id.frame_layout, new BuyFragment());
+                    }
+                }
+            });
+        }else{
             replaceFragment(new BuyFragment());
         }
 
@@ -65,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
         bottomNavigationView.setOnItemSelectedListener(item -> {
                     int id = item.getItemId();
                     if (id == R.id.navigation_sell) {
-                       replaceFragment(new SellerFragment());
+                        replaceFragment(new SellerFragment());
                         return true;
                     } else if (id == R.id.navigation_buy) {
                         replaceFragment(new BuyFragment());
