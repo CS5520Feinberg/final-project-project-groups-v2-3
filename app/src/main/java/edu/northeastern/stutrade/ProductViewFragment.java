@@ -1,6 +1,7 @@
 package edu.northeastern.stutrade;
 
 import android.app.Dialog;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,17 +9,24 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.squareup.picasso.Picasso;
+
+import java.util.List;
+
 import edu.northeastern.stutrade.Models.Product;
 
 public class ProductViewFragment extends Fragment {
     private Product selectedProduct;
+    private StorageReference storageReference;
 
     @Nullable
     @Override
@@ -26,12 +34,17 @@ public class ProductViewFragment extends Fragment {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
         View rootView = inflater.inflate(R.layout.fragment_product_view, container, false);
-
+        UserSessionManager sessionManager = new UserSessionManager(getContext());
+        String email = sessionManager.getEmail();
+        String userName = email.substring(0, email.indexOf("@"));
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        //remove username to sellerusername
+        storageReference = storage.getReference("images/" + userName + "/");
         Bundle args = getArguments();
         if (args != null && args.containsKey("selected_product")) {
             selectedProduct = (Product) args.getSerializable("selected_product");
-        }
 
+        }
         if (selectedProduct != null) {
             ImageView productImageView = rootView.findViewById(R.id.productImageView);
             TextView productDescriptionTextView = rootView.findViewById(R.id.productDescriptionTextView);
@@ -39,25 +52,36 @@ public class ProductViewFragment extends Fragment {
             TextView sellerNameTextView = rootView.findViewById(R.id.sellerNameTextView);
             TextView productPriceTextView = rootView.findViewById(R.id.productPriceTextView);
             Button chatButton = rootView.findViewById(R.id.chatButton);
-
-
             productDescriptionTextView.setText(selectedProduct.getProductDescription());
             datePostedTextView.setText(selectedProduct.getDatePosted());
             sellerNameTextView.setText(selectedProduct.getSellerName());
             productPriceTextView.setText(String.valueOf(selectedProduct.getProductPrice()));
+            loadFirstImageFromStorage(storageReference, productImageView);
 
             // chatButton.setOnClickListener(view -> {});
 
         }
 
         ImageView productImageView = rootView.findViewById(R.id.productImageView);
-        productImageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showImagePopup();
-            }
-        });
+        productImageView.setOnClickListener(v -> showImagePopup());
         return rootView;
+    }
+
+    private void loadFirstImageFromStorage(StorageReference storageReference, ImageView productImageView) {
+        storageReference.listAll()
+                .addOnSuccessListener(listResult -> {
+                    List<StorageReference> items = listResult.getItems();
+                    if (!items.isEmpty()) {
+                        StorageReference firstItem = items.get(0);
+                        firstItem.getDownloadUrl().addOnSuccessListener(uri -> {
+                            String imageUrl = uri.toString();
+                            Picasso.get().load(imageUrl).into(productImageView);
+                        });
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Unable to load images", Toast.LENGTH_SHORT).show();
+                });
     }
 
     @Override
@@ -73,46 +97,34 @@ public class ProductViewFragment extends Fragment {
             return false;
         });
     }
-
     private void showImagePopup() {
         Dialog imagePopup = new Dialog(requireContext());
         imagePopup.setContentView(R.layout.layout_popup_image);
-
         LinearLayout imageContainer = imagePopup.findViewById(R.id.imageContainer);
 
-        // Here, you can dynamically add ImageViews for each image you want to display.
-        // For example, if you have a list of image URLs, you can loop through the list and add an ImageView for each image:
-        int[] imageResourceIds = {R.drawable.ic_buy, R.drawable.ic_camera, R.drawable.ic_chat};
-        for (int resourceId : imageResourceIds) {
-            ImageView imageView = new ImageView(requireContext());
-            imageView.setLayoutParams(new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-            ));
-            imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-            imageView.setPadding(16, 16, 16, 16);
-            imageView.setImageResource(resourceId); // Set the image resource from the drawable folder.
-            imageContainer.addView(imageView);
-        }
+        storageReference.listAll()
+                .addOnSuccessListener(listResult -> {
+                    List<StorageReference> items = listResult.getItems();
 
-//        for (String imageUrl : listOfImageUrls) {
-//
-//            ImageView imageView = new ImageView(requireContext());
-//
-//            imageView.setLayoutParams(new LinearLayout.LayoutParams(
-//                    LinearLayout.LayoutParams.MATCH_PARENT,
-//                    LinearLayout.LayoutParams.WRAP_CONTENT
-//            ));
-//            imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-//            imageView.setPadding(16, 16, 16, 16);
-//            // Load the image into the ImageView using an image loading library like Picasso or Glide.
-//            // For example, using Picasso:
-//            // Picasso.get().load(imageUrl).into(imageView);
-//            // Add the ImageView to the image container.
-//            imageContainer.addView(imageView);
-//        }
-
+                    for (StorageReference item : items) {
+                        item.getDownloadUrl().addOnSuccessListener(uri -> {
+                            String imageUrl = uri.toString();
+                            // Load the image into the ImageView using Picasso
+                            ImageView imageView = new ImageView(requireContext());
+                            imageView.setLayoutParams(new LinearLayout.LayoutParams(
+                                    LinearLayout.LayoutParams.MATCH_PARENT,
+                                    LinearLayout.LayoutParams.WRAP_CONTENT
+                            ));
+                            Picasso.get().load(imageUrl).into(imageView);
+                            imageContainer.addView(imageView);
+                        });
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Unable to load images", Toast.LENGTH_SHORT).show();
+                });
         imagePopup.show();
     }
+
 
 }
