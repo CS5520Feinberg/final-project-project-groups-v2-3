@@ -8,6 +8,7 @@
         android:id="@+id/imageContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:padding="16dp"
         android:orientation="vertical">
 
         <!-- Add ImageViews here dynamically using code -->
