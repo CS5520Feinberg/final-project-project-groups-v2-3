@@ -1,7 +1,11 @@
 package edu.northeastern.stutrade.Models;
+
 import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -64,40 +68,48 @@ public class Product implements Serializable {
         this.productPrice = productPrice;
     }
 
-        public String getProductName() {
-            return productName;
-        }
-        public void setName(String productName) {
-            this.productName = productName;
-        }
-        public String getDatePosted() {
-            return datePosted;
-        }
-        public void setDatePosted(String datePosted) {
-            this.datePosted = datePosted;
-        }
+    public String getProductName() {
+        return productName;
+    }
 
-        public String getProductDescription() {
-            return productDescription;
-        }
+    public void setName(String productName) {
+        this.productName = productName;
+    }
 
-            public void setProductDescription(String productDescription) {
-                this.productDescription = productDescription;
-            }
-            public Double getPriceAsDouble() {
-                try {
-                    return Double.parseDouble(productPrice);
-                } catch (NumberFormatException e) {
-                    return 0.0;
-                }
-            }
-            public Date getDatePostedAsDate() {
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-                try {
-                    return sdf.parse(datePosted);
-                } catch (ParseException e) {
-                    return new Date();
-                }
-            }
+    public String getDatePosted() {
+        return datePosted;
+    }
 
+    public void setDatePosted(String datePosted) {
+        this.datePosted = datePosted;
+    }
+
+    public String getProductDescription() {
+        return productDescription;
+    }
+
+    public void setProductDescription(String productDescription) {
+        this.productDescription = productDescription;
+    }
+
+    public Double getPriceAsDouble() {
+        try {
+            return Double.parseDouble(productPrice);
+        } catch (NumberFormatException e) {
+            return 0.0;
         }
+    }
+
+    public Date getDatePostedAsDate() {
+        SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
+
+        try {
+            return sdf.parse(datePosted);
+        } catch (ParseException e) {
+            return new Date();
+        }
+    }
+
+
+
+}

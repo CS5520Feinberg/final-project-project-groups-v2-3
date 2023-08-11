@@ -22,7 +22,12 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 import edu.northeastern.stutrade.Models.Product;
@@ -39,11 +44,7 @@ public class ProductViewFragment extends Fragment {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
         View rootView = inflater.inflate(R.layout.fragment_product_view, container, false);
-        UserSessionManager sessionManager = new UserSessionManager(requireContext());
-        String email = sessionManager.getEmail();
-        String userName = email.substring(0, email.indexOf("@"));
         FirebaseStorage storage = FirebaseStorage.getInstance();
-        //remove username to sellerusername
         Bundle args = getArguments();
         if (args != null && args.containsKey("selected_product")) {
             selectedProduct = (Product) args.getSerializable("selected_product");
@@ -55,11 +56,14 @@ public class ProductViewFragment extends Fragment {
             TextView datePostedTextView = rootView.findViewById(R.id.datePostedTextView);
             TextView sellerNameTextView = rootView.findViewById(R.id.sellerNameTextView);
             TextView productPriceTextView = rootView.findViewById(R.id.productPriceTextView);
+            TextView productNameTextView = rootView.findViewById(R.id.productNameTextViews);
             Button chatButton = rootView.findViewById(R.id.chatButton);
-            productDescriptionTextView.setText(selectedProduct.getProductDescription());
-            datePostedTextView.setText(selectedProduct.getDatePosted());
-            sellerNameTextView.setText(selectedProduct.getSellerName());
-            productPriceTextView.setText(String.valueOf(selectedProduct.getProductPrice()));
+
+            productNameTextView.setText(selectedProduct.getProductName());
+            productDescriptionTextView.setText("About the product: " + selectedProduct.getProductDescription());
+            datePostedTextView.setText("Posted on: " + getDateOnly(selectedProduct.getDatePosted()));
+            sellerNameTextView.setText("Sold by: " + selectedProduct.getSellerName());
+            productPriceTextView.setText("$" + String.valueOf(selectedProduct.getProductPrice()));
             Picasso.get().load(selectedProduct.getImageUrl()).into(productImageView);
             chatButton.setOnClickListener(view -> openChatFragment());
 
@@ -85,6 +89,8 @@ public class ProductViewFragment extends Fragment {
             return false;
         });
     }
+
+
     private void showImagePopup() {
         Dialog imagePopup = new Dialog(requireContext());
         imagePopup.setContentView(R.layout.layout_popup_image);
@@ -126,6 +132,15 @@ public class ProductViewFragment extends Fragment {
                 .replace(R.id.frame_layout, chatFragment)
                 .addToBackStack(null)
                 .commit();
+    }
+
+    private LocalDate getDateOnly(String datePosted) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
+        try {
+            return LocalDate.parse(datePosted, formatter);
+        } catch (DateTimeParseException e) {
+            return LocalDate.now(); // Return current date if parsing fails
+        }
     }
 
 }

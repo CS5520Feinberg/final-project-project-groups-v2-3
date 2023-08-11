@@ -1,5 +1,6 @@
 package edu.northeastern.stutrade;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
@@ -82,9 +83,18 @@ public class SignupActivity extends AppCompatActivity {
                         finish();
                     } else {
                         // Registration failed
-                        Toast.makeText(SignupActivity.this, "Registration failed", Toast.LENGTH_SHORT).show();
+                        showDialog("Failed", "Email already exists! \nPlease create account with different email ");
                     }
                 });
+    }
+
+    private void showDialog(String title, String message) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(title)
+                .setMessage(message)
+                .setPositiveButton("OK", (dialog, which) -> dialog.dismiss())
+                .create()
+                .show();
     }
 
     private boolean isValidEmail(CharSequence target) {
