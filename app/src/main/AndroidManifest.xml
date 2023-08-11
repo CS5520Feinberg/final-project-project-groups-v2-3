@@ -35,8 +35,8 @@
         <activity
             android:name=".MainActivity"
             android:exported="false" />
+
         <receiver android:name=".ClearNotificationHandler" />
     </application>
-
 
 </manifest>

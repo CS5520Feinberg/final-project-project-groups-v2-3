@@ -64,13 +64,6 @@ public class Product implements Serializable {
         this.productPrice = productPrice;
     }
 
-
-
-
-
-
-public void setDatePosted(String datePosted) {
-
         public String getProductName() {
             return productName;
         }
@@ -87,9 +80,6 @@ public void setDatePosted(String datePosted) {
         public String getProductDescription() {
             return productDescription;
         }
-
-
-        public Date getDatePostedAsDate() {
 
             public void setProductDescription(String productDescription) {
                 this.productDescription = productDescription;
