@@ -1,5 +1,4 @@
 package edu.northeastern.stutrade.Models;
-
 import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -65,45 +64,40 @@ public class Product implements Serializable {
         this.productPrice = productPrice;
     }
 
-    public String getProductName() {
-        return productName;
-    }
-
-    public void setName(String productName) {
-        this.productName = productName;
-    }
-
-    public String getDatePosted() {
-        return datePosted;
-    }
-
-    public void setDatePosted(String datePosted) {
-        this.datePosted = datePosted;
-    }
-
-    public String getProductDescription() {
-        return productDescription;
-    }
-
-    public void setProductDescription(String productDescription) {
-        this.productDescription = productDescription;
-    }
-
-    public Double getPriceAsDouble() {
-        try {
-            return Double.parseDouble(productPrice);
-        } catch (NumberFormatException e) {
-            return 0.0;
+        public String getProductName() {
+            return productName;
         }
-    }
-
-    public Date getDatePostedAsDate() {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-        try {
-            return sdf.parse(datePosted);
-        } catch (ParseException e) {
-            return new Date();
+        public void setName(String productName) {
+            this.productName = productName;
         }
-    }
+        public String getDatePosted() {
+            return datePosted;
+        }
+        public void setDatePosted(String datePosted) {
+            this.datePosted = datePosted;
+        }
 
-}
+        public String getProductDescription() {
+            return productDescription;
+        }
+
+            public void setProductDescription(String productDescription) {
+                this.productDescription = productDescription;
+            }
+            public Double getPriceAsDouble() {
+                try {
+                    return Double.parseDouble(productPrice);
+                } catch (NumberFormatException e) {
+                    return 0.0;
+                }
+            }
+            public Date getDatePostedAsDate() {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+                try {
+                    return sdf.parse(datePosted);
+                } catch (ParseException e) {
+                    return new Date();
+                }
+            }
+
+        }
