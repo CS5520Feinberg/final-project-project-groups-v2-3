@@ -1,10 +1,13 @@
 package edu.northeastern.stutrade;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -28,6 +31,15 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -58,6 +70,8 @@ public class ProfileFragment extends Fragment {
     private static final String KEY_LOCATION = "location";
     private static final String KEY_UNIVERSITY= "university";
     private static final String KEY_PROFILE_PHOTO = "profile_photo";
+    private StorageReference profileStorageRef;
+    Bitmap profilePhotoBitmap;
 
     public ProfileFragment() {
         // Required empty public constructor
@@ -100,7 +114,7 @@ public class ProfileFragment extends Fragment {
         outState.putString(KEY_EMAIL, tv_email.getText().toString());
         outState.putString(KEY_BIO, et_bio.getText().toString());
         outState.putString(KEY_LOCATION, et_location.getText().toString());
-        outState.putParcelable(KEY_PROFILE_PHOTO, originalProfilePhotoBitmap);
+        //outState.putParcelable(KEY_PROFILE_PHOTO, originalProfilePhotoBitmap);
     }
 
     @Override
@@ -174,6 +188,7 @@ public class ProfileFragment extends Fragment {
                         String storedBio = snapshot.child("bio").getValue(String.class);
                         String storedLocation = snapshot.child("location").getValue(String.class);
                         String storedUniversity = snapshot.child("university").getValue(String.class);
+                        String imageUrl = snapshot.child("profile_photo").getValue(String.class);
 
                         // Update the UI on the main thread
                         requireActivity().runOnUiThread(() -> {
@@ -186,6 +201,7 @@ public class ProfileFragment extends Fragment {
                             et_location.setText(storedLocation);
                             tv_university.setText(storedUniversity);
                             et_university.setText(storedUniversity);
+                            new LoadImageTask().execute(imageUrl);
                         });
                     }
                 }
@@ -246,6 +262,26 @@ public class ProfileFragment extends Fragment {
         profileRef.child("bio").setValue(editedBio);
         profileRef.child("location").setValue(editedLocation);
         profileRef.child("university").setValue(editedUniversity);
+
+        profileStorageRef = FirebaseStorage.getInstance().getReference("profile_image/" + userId);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        if (profilePhotoBitmap != null) {
+            profilePhotoBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+            byte[] profileImage = baos.toByteArray();
+            UploadTask uploadImage = profileStorageRef.putBytes(profileImage);
+
+            uploadImage.addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    profileStorageRef.getDownloadUrl().addOnSuccessListener(uri -> {
+                        String imageUrl = uri.toString();
+                        // Save the image URL to Firebase Realtime Database
+                        profileRef.child("profile_photo").setValue(imageUrl);
+                    });
+                } else {
+                    Toast.makeText(getContext(), "Save not successful", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
 
         showReadOnlyViews();
     }
@@ -316,13 +352,14 @@ public class ProfileFragment extends Fragment {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK) {
             Bundle extras = data.getExtras();
-            Bitmap profilePhotoBitmap = (Bitmap) extras.get("data");
+            profilePhotoBitmap = (Bitmap) extras.get("data");
             iv_profile_photo.setImageBitmap(profilePhotoBitmap);
         }
     }
 
     private void setDefaultProfilePicture() {
         iv_profile_photo.setImageResource(R.drawable.ic_profile);
+        profilePhotoBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_profile);
     }
 
     public boolean onBackPressed() {
@@ -368,5 +405,31 @@ public class ProfileFragment extends Fragment {
         activity.finish();
 
         Toast.makeText(getContext(), "Logged out successfully!", Toast.LENGTH_SHORT).show();
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    private class LoadImageTask extends AsyncTask<String, Void, Bitmap> {
+        @Override
+        protected Bitmap doInBackground(String... urls) {
+            String imageUrl = urls[0];
+            try {
+                URL url = new URL(imageUrl);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setDoInput(true);
+                connection.connect();
+                InputStream input = connection.getInputStream();
+                return BitmapFactory.decodeStream(input);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap result) {
+            if (result != null) {
+                iv_profile_photo.setImageBitmap(result);
+            }
+        }
     }
 }
