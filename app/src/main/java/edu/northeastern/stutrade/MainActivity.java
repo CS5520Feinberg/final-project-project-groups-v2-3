@@ -6,7 +6,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import android.app.AlertDialog;
@@ -19,6 +18,7 @@ import android.graphics.Color;
 import android.media.RingtoneManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.widget.TextView;
 
 
@@ -29,7 +29,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import edu.northeastern.stutrade.Models.Product;
 import edu.northeastern.stutrade.Models.ProductViewModel;
 
 public class MainActivity extends AppCompatActivity {
@@ -54,12 +53,15 @@ public class MainActivity extends AppCompatActivity {
         String email = sessionManager.getEmail();
         username_tv = findViewById(R.id.username);
         username_tv.setText(username);
+        bottomNavigationView = findViewById(R.id.bottom_navigation_view);
 
         Intent intent = getIntent();
         String fragmentType = intent.getStringExtra(EXTRA_FRAGMENT_TYPE);
         String messageToUser = intent.getStringExtra(MESSAGE_TO_USER);
         ProductViewModel productViewModel = new ViewModelProvider(this).get(ProductViewModel.class);
-        if (messageToUser != null && !messageToUser.isEmpty() && "chat_fragment".equals(fragmentType)) {
+        if (productViewModel.getCurrentFragment().getValue() == null && messageToUser != null && !messageToUser.isEmpty() && "chat_fragment".equals(fragmentType)) {
+            MenuItem chatMenuItem = bottomNavigationView.getMenu().findItem(R.id.navigation_chat);
+            chatMenuItem.setChecked(true);
             replaceFragment(ChatFragment.newInstance(username, email, messageToUser));
         }else if(productViewModel.getCurrentFragment().getValue()!=null){
             productViewModel.getCurrentFragment().observe(this, fragmentValue -> {
@@ -87,7 +89,6 @@ public class MainActivity extends AppCompatActivity {
             replaceFragment(new BuyFragment());
         }
 
-        bottomNavigationView = findViewById(R.id.bottom_navigation_view);
         bottomNavigationView.setOnItemSelectedListener(item -> {
                     int id = item.getItemId();
                     if (id == R.id.navigation_sell) {
@@ -228,7 +229,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_chat)
+                .setSmallIcon(R.drawable.stutrade_round)
                 .setContentTitle("New Message from " + fromUsername)
                 .setContentText(message)
                 .setContentIntent(openIntent)
