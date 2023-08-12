@@ -77,7 +77,7 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
         }
 
         productViewModel = new ViewModelProvider(requireActivity()).get(ProductViewModel.class);
-
+        productViewModel.setCurrentFragment("buy_fragment");
         productViewModel.getIsProductSelected().observe(getViewLifecycleOwner(), isProductSelected -> {
             if (isProductSelected) {
                 Product product = productViewModel.getSelectedProduct().getValue();

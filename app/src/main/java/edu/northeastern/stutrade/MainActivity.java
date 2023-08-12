@@ -83,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
                         default:
                             transaction.replace(R.id.frame_layout, new BuyFragment());
                     }
+                    transaction.commit();
                 }
             });
         }else{
