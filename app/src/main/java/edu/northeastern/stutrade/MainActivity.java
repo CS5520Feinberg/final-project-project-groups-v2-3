@@ -5,6 +5,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.app.AlertDialog;
 
@@ -16,6 +18,7 @@ import android.graphics.Color;
 import android.media.RingtoneManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.widget.TextView;
 
 
@@ -26,6 +29,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import edu.northeastern.stutrade.Models.ProductViewModel;
+
 public class MainActivity extends AppCompatActivity {
 
     BottomNavigationView bottomNavigationView;
@@ -35,35 +40,59 @@ public class MainActivity extends AppCompatActivity {
     public static final String MESSAGE_TO_USER = "message_to_user";
     TextView username_tv;
     String username;
+    private ProductViewModel productViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //replaceFragment(new BuyFragment());
+
 
         UserSessionManager sessionManager = new UserSessionManager(getApplicationContext());
         username = sessionManager.getUsername();
         String email = sessionManager.getEmail();
         username_tv = findViewById(R.id.username);
         username_tv.setText(username);
+        bottomNavigationView = findViewById(R.id.bottom_navigation_view);
 
         Intent intent = getIntent();
         String fragmentType = intent.getStringExtra(EXTRA_FRAGMENT_TYPE);
         String messageToUser = intent.getStringExtra(MESSAGE_TO_USER);
-
-        if (messageToUser != null && !messageToUser.isEmpty() && "chat_fragment".equals(fragmentType)) {
+        ProductViewModel productViewModel = new ViewModelProvider(this).get(ProductViewModel.class);
+        if (productViewModel.getCurrentFragment().getValue() == null && messageToUser != null && !messageToUser.isEmpty() && "chat_fragment".equals(fragmentType)) {
+            MenuItem chatMenuItem = bottomNavigationView.getMenu().findItem(R.id.navigation_chat);
+            chatMenuItem.setChecked(true);
             replaceFragment(ChatFragment.newInstance(username, email, messageToUser));
-        } else {
-            // If no specific fragment type provided, replace with BuyFragment (default)
+        }else if(productViewModel.getCurrentFragment().getValue()!=null){
+            productViewModel.getCurrentFragment().observe(this, fragmentValue -> {
+                if (fragmentValue != null) {
+                    FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+                    switch (fragmentValue) {
+                        case "chat_fragment":
+                            transaction.replace(R.id.frame_layout, new ChatFragment());
+                            break;
+                        case "buy_fragment":
+                            transaction.replace(R.id.frame_layout, new BuyFragment());
+                            break;
+                        case "seller_fragment":
+                            transaction.replace(R.id.frame_layout, new SellerFragment());
+                            break;
+                        case "profile_fragment":
+                            transaction.replace(R.id.frame_layout, new ProfileFragment());
+                            break;
+                        default:
+                            transaction.replace(R.id.frame_layout, new BuyFragment());
+                    }
+                }
+            });
+        }else{
             replaceFragment(new BuyFragment());
         }
 
-        bottomNavigationView = findViewById(R.id.bottom_navigation_view);
         bottomNavigationView.setOnItemSelectedListener(item -> {
                     int id = item.getItemId();
                     if (id == R.id.navigation_sell) {
-                       replaceFragment(new SellerFragment());
+                        replaceFragment(new SellerFragment());
                         return true;
                     } else if (id == R.id.navigation_buy) {
                         replaceFragment(new BuyFragment());
@@ -118,19 +147,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void handleOnBackPressed() {
                 Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.frame_layout);
-
-                // Check if the current fragment is a ChatFragment
                 if (currentFragment instanceof ChatFragment) {
                     ChatFragment chatFragment = (ChatFragment) currentFragment;
                     if (chatFragment.onBackPressed()) {
-                        // The back button press was handled by the ChatFragment, do nothing further.
                         return;
                     }
                 }
                 if (currentFragment instanceof ProfileFragment) {
                     ProfileFragment profileFragment = (ProfileFragment) currentFragment;
                     if (profileFragment.onBackPressed()) {
-                        // The back button press was handled by the ChatFragment, do nothing further.
                         return;
                     }
                 }
@@ -140,13 +165,9 @@ public class MainActivity extends AppCompatActivity {
                     getSupportFragmentManager().popBackStack();
                 }
 
-                // Check if the current activity is the root activity
                 if (isTaskRoot()) {
-                    // If it is the root activity, call finish to exit the app
-                   // finishAffinity();
                     showExitConfirmationDialog();
                 } else {
-                    // If it's not the root activity, propagate the back press event to the activity stack
                     setEnabled(false);
                     onBackPressed();
                 }
@@ -208,7 +229,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_chat)
+                .setSmallIcon(R.drawable.stutrade_round)
                 .setContentTitle("New Message from " + fromUsername)
                 .setContentText(message)
                 .setContentIntent(openIntent)

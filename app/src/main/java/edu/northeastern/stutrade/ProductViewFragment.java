@@ -1,9 +1,9 @@
 package edu.northeastern.stutrade;
 
 import android.app.Dialog;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -15,18 +15,28 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 
 import edu.northeastern.stutrade.Models.Product;
+import edu.northeastern.stutrade.Models.ProductViewModel;
 
 public class ProductViewFragment extends Fragment {
     private Product selectedProduct;
     private StorageReference storageReference;
+    ProductViewModel productViewModel;
 
     @Nullable
     @Override
@@ -34,31 +44,28 @@ public class ProductViewFragment extends Fragment {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
         View rootView = inflater.inflate(R.layout.fragment_product_view, container, false);
-        UserSessionManager sessionManager = new UserSessionManager(getContext());
-        String email = sessionManager.getEmail();
-        String userName = email.substring(0, email.indexOf("@"));
         FirebaseStorage storage = FirebaseStorage.getInstance();
-        //remove username to sellerusername
-        storageReference = storage.getReference("images/" + userName + "/");
         Bundle args = getArguments();
         if (args != null && args.containsKey("selected_product")) {
             selectedProduct = (Product) args.getSerializable("selected_product");
-
         }
         if (selectedProduct != null) {
+            storageReference = storage.getReference("images/" + selectedProduct.getSellerId() + "/" + selectedProduct.getProductName());
             ImageView productImageView = rootView.findViewById(R.id.productImageView);
             TextView productDescriptionTextView = rootView.findViewById(R.id.productDescriptionTextView);
             TextView datePostedTextView = rootView.findViewById(R.id.datePostedTextView);
             TextView sellerNameTextView = rootView.findViewById(R.id.sellerNameTextView);
             TextView productPriceTextView = rootView.findViewById(R.id.productPriceTextView);
+            TextView productNameTextView = rootView.findViewById(R.id.productNameTextViews);
             Button chatButton = rootView.findViewById(R.id.chatButton);
-            productDescriptionTextView.setText(selectedProduct.getProductDescription());
-            datePostedTextView.setText(selectedProduct.getDatePosted());
-            sellerNameTextView.setText(selectedProduct.getSellerName());
-            productPriceTextView.setText(String.valueOf(selectedProduct.getProductPrice()));
-            loadFirstImageFromStorage(storageReference, productImageView);
 
-            // chatButton.setOnClickListener(view -> {});
+            productNameTextView.setText(selectedProduct.getProductName());
+            productDescriptionTextView.setText("About the product: " + selectedProduct.getProductDescription());
+            datePostedTextView.setText("Posted on: " + getDateOnly(selectedProduct.getDatePosted()));
+            sellerNameTextView.setText("Sold by: " + selectedProduct.getSellerName());
+            productPriceTextView.setText("$" + String.valueOf(selectedProduct.getProductPrice()));
+            Picasso.get().load(selectedProduct.getImageUrl()).into(productImageView);
+            chatButton.setOnClickListener(view -> openChatFragment());
 
         }
 
@@ -67,26 +74,11 @@ public class ProductViewFragment extends Fragment {
         return rootView;
     }
 
-    private void loadFirstImageFromStorage(StorageReference storageReference, ImageView productImageView) {
-        storageReference.listAll()
-                .addOnSuccessListener(listResult -> {
-                    List<StorageReference> items = listResult.getItems();
-                    if (!items.isEmpty()) {
-                        StorageReference firstItem = items.get(0);
-                        firstItem.getDownloadUrl().addOnSuccessListener(uri -> {
-                            String imageUrl = uri.toString();
-                            Picasso.get().load(imageUrl).into(productImageView);
-                        });
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(getContext(), "Unable to load images", Toast.LENGTH_SHORT).show();
-                });
-    }
-
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        productViewModel = new ViewModelProvider(requireActivity()).get(ProductViewModel.class);
+        productViewModel.setIsProductSelected(true);
         view.setFocusableInTouchMode(true);
         view.requestFocus();
         view.setOnKeyListener((v, keyCode, event) -> {
@@ -97,6 +89,8 @@ public class ProductViewFragment extends Fragment {
             return false;
         });
     }
+
+
     private void showImagePopup() {
         Dialog imagePopup = new Dialog(requireContext());
         imagePopup.setContentView(R.layout.layout_popup_image);
@@ -126,5 +120,27 @@ public class ProductViewFragment extends Fragment {
         imagePopup.show();
     }
 
+    private void openChatFragment() {
+        // Create a new instance of ChatFragment with the required arguments
+        UserSessionManager sessionManager = new UserSessionManager(getContext());
+        ChatFragment chatFragment = ChatFragment.newInstance(sessionManager.getUsername(), sessionManager.getEmail(), selectedProduct.getSellerId());
+        BottomNavigationView bottomNavigationView = getActivity().findViewById(R.id.bottom_navigation_view);
+        MenuItem chatMenuItem = bottomNavigationView.getMenu().findItem(R.id.navigation_chat);
+        chatMenuItem.setChecked(true);
+        // Perform fragment transaction to open ChatFragment
+        requireActivity().getSupportFragmentManager().beginTransaction()
+                .replace(R.id.frame_layout, chatFragment)
+                .addToBackStack(null)
+                .commit();
+    }
+
+    private LocalDate getDateOnly(String datePosted) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss zzz yyyy", Locale.US);
+        try {
+            return LocalDate.parse(datePosted, formatter);
+        } catch (DateTimeParseException e) {
+            return LocalDate.now(); // Return current date if parsing fails
+        }
+    }
 
 }

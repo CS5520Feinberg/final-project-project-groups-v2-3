@@ -11,8 +11,10 @@ import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -30,12 +32,14 @@ import java.util.Date;
 import java.util.List;
 
 import edu.northeastern.stutrade.Models.Product;
+import edu.northeastern.stutrade.Models.ProductViewModel;
 
 public class BuyFragment extends Fragment implements ProductAdapter.OnProductClickListener{
     private RecyclerView productsRecyclerView;
     private ProgressBar loader;
     private ProductAdapter productAdapter;
-
+    private ProductViewModel productViewModel;
+    private final List<Product> originalProductList = new ArrayList<>();
     private String[] sortingOptions = {
             "Price Increasing",
             "Price Decreasing",
@@ -45,12 +49,19 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
 
     private String selectedSortingOption="";
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_buy, container, false);
         productsRecyclerView = rootView.findViewById(R.id.productRecyclerView);
         loader = rootView.findViewById(R.id.loader);
+        SearchView searchView = rootView.findViewById(R.id.searchView);
+
         if (savedInstanceState != null && savedInstanceState.containsKey("product_list")) {
             List<Product> savedProductList = (ArrayList<Product>) savedInstanceState.getSerializable("product_list");
             if (savedProductList != null) {
@@ -64,7 +75,45 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
             productsRecyclerView();
             sortDropdown(rootView);
         }
+
+        productViewModel = new ViewModelProvider(requireActivity()).get(ProductViewModel.class);
+
+        productViewModel.getIsProductSelected().observe(getViewLifecycleOwner(), isProductSelected -> {
+            if (isProductSelected) {
+                Product product = productViewModel.getSelectedProduct().getValue();
+                onProductClick(product);
+            }
+        });
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                filterProducts(newText);
+                return true;
+            }
+        });
+
         return rootView;
+    }
+
+    private void filterProducts(String query) {
+        if (query.isEmpty()) {
+            productAdapter.setProductList(originalProductList); // Reset the list
+        } else {
+            List<Product> productList = new ArrayList<>();
+            for (Product product : originalProductList) {
+                if (product.getProductName().toLowerCase().contains(query.toLowerCase())) {
+                    productList.add(product);
+                }
+            }
+            productAdapter.setProductList(productList);
+        }
+        productAdapter.notifyDataSetChanged();
     }
 
     private void sortDropdown(View rootView){
@@ -91,6 +140,7 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
                 for (DataSnapshot productSnapshot : dataSnapshot.getChildren()) {
                     Product product = productSnapshot.getValue(Product.class);
                     productList.add(product);
+                    originalProductList.add(product);
                 }
 
                 // Create and set up the RecyclerView with the fetched data
@@ -143,6 +193,7 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
     @Override
     public void onProductClick(Product product) {
         // Create a new ProductViewFragment and pass the selected product details
+        productViewModel.setSelectedProduct(product);
         ProductViewFragment productViewFragment = new ProductViewFragment();
         Bundle bundle = new Bundle();
         bundle.putSerializable("selected_product", product);
@@ -167,5 +218,11 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
         if (position >= 0) {
             sortDropdown.setText(sortingOptions[position], false);
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        productViewModel.setIsProductSelected(false);
     }
 }

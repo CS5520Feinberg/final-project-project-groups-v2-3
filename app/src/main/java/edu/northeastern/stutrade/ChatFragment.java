@@ -4,6 +4,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -33,6 +34,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import edu.northeastern.stutrade.Models.ProductViewModel;
+
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link ChatFragment#newInstance} factory method to
@@ -58,6 +61,7 @@ public class ChatFragment extends Fragment {
 
     AutoCompleteTextView sortDropdown;
     TextInputLayout sortDropdownLayout;
+    private ProductViewModel productViewModel;
 
     public ChatFragment() {
         // Required empty public constructor
@@ -90,6 +94,9 @@ public class ChatFragment extends Fragment {
             selectedUserID = getArguments().getString(ARG_PARAM3);
             userId = email.substring(0, email.indexOf("@"));
         }
+
+        productViewModel = new ViewModelProvider(requireActivity()).get(ProductViewModel.class);
+        productViewModel.setCurrentFragment("chat_fragment");
     }
 
     @Override

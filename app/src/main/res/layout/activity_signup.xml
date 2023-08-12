@@ -25,6 +25,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Enter Name"
+            android:textColor="#0196A3"
             android:textColorHint="@android:color/white"
             android:layout_marginTop="24dp" />
 
@@ -33,6 +34,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Enter Email"
+            android:textColor="#0196A3"
             android:textColorHint="@android:color/white"
             android:layout_marginTop="24dp" />
 
@@ -41,6 +43,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Enter password"
+            android:textColor="#0196A3"
             android:inputType="textPassword"
             android:textColorHint="@android:color/white"
             android:layout_marginTop="24dp" />

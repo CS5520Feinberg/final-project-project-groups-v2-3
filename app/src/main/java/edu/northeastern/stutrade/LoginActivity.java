@@ -118,9 +118,6 @@ public class LoginActivity extends AppCompatActivity {
                         Toast.makeText(LoginActivity.this, "Login failed", Toast.LENGTH_SHORT).show();
                     }
                 });
-
-        //startActivity(new Intent(LoginActivity.this, MainActivity.class));
-        //finish();
     }
 
     private boolean isValidEmail(CharSequence target) {

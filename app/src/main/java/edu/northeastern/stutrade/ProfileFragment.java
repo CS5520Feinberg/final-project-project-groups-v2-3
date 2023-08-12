@@ -1,16 +1,19 @@
 package edu.northeastern.stutrade;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.provider.MediaStore;
 import android.view.LayoutInflater;
@@ -28,6 +31,17 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+import edu.northeastern.stutrade.Models.ProductViewModel;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -51,13 +65,8 @@ public class ProfileFragment extends Fragment {
     private static String userId;
     DatabaseReference profileRef;
     private FirebaseAuth firebaseAuth;
-
-    private static final String KEY_USERNAME = "username";
-    private static final String KEY_EMAIL = "email";
-    private static final String KEY_BIO = "bio";
-    private static final String KEY_LOCATION = "location";
-    private static final String KEY_UNIVERSITY= "university";
-    private static final String KEY_PROFILE_PHOTO = "profile_photo";
+    private StorageReference profileStorageRef;
+    Bitmap profilePhotoBitmap;
 
     public ProfileFragment() {
         // Required empty public constructor
@@ -90,38 +99,11 @@ public class ProfileFragment extends Fragment {
             username = getArguments().getString(ARG_PARAM1);
             email = getArguments().getString(ARG_PARAM2);
         }
+
+        ProductViewModel productViewModel = new ViewModelProvider(requireActivity()).get(ProductViewModel.class);
+        productViewModel.setCurrentFragment("profile_fragment");
     }
 
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        // Save the data to the outState bundle
-        outState.putString(KEY_USERNAME, et_username.getText().toString());
-        outState.putString(KEY_EMAIL, tv_email.getText().toString());
-        outState.putString(KEY_BIO, et_bio.getText().toString());
-        outState.putString(KEY_LOCATION, et_location.getText().toString());
-        outState.putParcelable(KEY_PROFILE_PHOTO, originalProfilePhotoBitmap);
-    }
-
-    @Override
-    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
-        super.onViewStateRestored(savedInstanceState);
-        if (savedInstanceState != null) {
-            // Restore the data from the restored instance state
-            et_username.setText(savedInstanceState.getString(KEY_USERNAME));
-            et_bio.setText(savedInstanceState.getString(KEY_BIO));
-            et_location.setText(savedInstanceState.getString(KEY_LOCATION));
-            et_university.setText(savedInstanceState.getString(KEY_UNIVERSITY));
-            tv_username.setText(savedInstanceState.getString(KEY_USERNAME));
-            tv_email.setText(savedInstanceState.getString(KEY_EMAIL));
-            tv_bio.setText(savedInstanceState.getString(KEY_BIO));
-            tv_location.setText(savedInstanceState.getString(KEY_LOCATION));
-            tv_university.setText(savedInstanceState.getString(KEY_UNIVERSITY));
-
-            originalProfilePhotoBitmap = savedInstanceState.getParcelable(KEY_PROFILE_PHOTO);
-            iv_profile_photo.setImageBitmap(originalProfilePhotoBitmap);
-        }
-    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -163,55 +145,40 @@ public class ProfileFragment extends Fragment {
         btn_cancel = view.findViewById(R.id.btn_cancel);
         btn_cancel.setOnClickListener(v -> showExitConfirmationDialog());
 
-        if (savedInstanceState == null) {
-            // Get a reference to the user's profile data in the database
-            profileRef = FirebaseDatabase.getInstance().getReference("profiles").child(userId);
-            profileRef.addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    if (isAdded() && snapshot.exists()) {
-                        String storedUsername = snapshot.child("username").getValue(String.class);
-                        String storedBio = snapshot.child("bio").getValue(String.class);
-                        String storedLocation = snapshot.child("location").getValue(String.class);
-                        String storedUniversity = snapshot.child("university").getValue(String.class);
+        // Get a reference to the user's profile data in the database
+        profileRef = FirebaseDatabase.getInstance().getReference("profiles").child(userId);
+        profileRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (isAdded() && snapshot.exists()) {
+                    String storedUsername = snapshot.child("username").getValue(String.class);
+                    String storedBio = snapshot.child("bio").getValue(String.class);
+                    String storedLocation = snapshot.child("location").getValue(String.class);
+                    String storedUniversity = snapshot.child("university").getValue(String.class);
+                    String imageUrl = snapshot.child("profile_photo").getValue(String.class);
 
-                        // Update the UI on the main thread
-                        requireActivity().runOnUiThread(() -> {
-                            // Populate the views with the data from the database
-                            tv_username.setText(storedUsername);
-                            et_username.setText(storedUsername);
-                            tv_bio.setText(storedBio);
-                            et_bio.setText(storedBio);
-                            tv_location.setText(storedLocation);
-                            et_location.setText(storedLocation);
-                            tv_university.setText(storedUniversity);
-                            et_university.setText(storedUniversity);
-                        });
-                    }
+                    // Update the UI on the main thread
+                    requireActivity().runOnUiThread(() -> {
+                        // Populate the views with the data from the database
+                        tv_username.setText(storedUsername);
+                        et_username.setText(storedUsername);
+                        tv_bio.setText(storedBio);
+                        et_bio.setText(storedBio);
+                        tv_location.setText(storedLocation);
+                        et_location.setText(storedLocation);
+                        tv_university.setText(storedUniversity);
+                        et_university.setText(storedUniversity);
+                        new LoadImageTask().execute(imageUrl);
+                    });
                 }
+            }
 
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-                    // Error occurred, handle the error
-                    Toast.makeText(getContext(), "Database Error: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
-
-        if (savedInstanceState != null) {
-            // Retrieve the data from the saved instance state if available
-            et_username.setText(savedInstanceState.getString(KEY_USERNAME));
-            et_bio.setText(savedInstanceState.getString(KEY_BIO));
-            et_location.setText(savedInstanceState.getString(KEY_LOCATION));
-            et_university.setText(savedInstanceState.getString(KEY_UNIVERSITY));
-            tv_username.setText(savedInstanceState.getString(KEY_USERNAME));
-            tv_email.setText(savedInstanceState.getString(KEY_EMAIL));
-            tv_bio.setText(savedInstanceState.getString(KEY_BIO));
-            tv_location.setText(savedInstanceState.getString(KEY_LOCATION));
-            tv_university.setText(savedInstanceState.getString(KEY_UNIVERSITY));
-            originalProfilePhotoBitmap = savedInstanceState.getParcelable(KEY_PROFILE_PHOTO);
-            iv_profile_photo.setImageBitmap(originalProfilePhotoBitmap);
-        }
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Error occurred, handle the error
+                Toast.makeText(getContext(), "Database Error: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
 
         return view;
     }
@@ -246,6 +213,26 @@ public class ProfileFragment extends Fragment {
         profileRef.child("bio").setValue(editedBio);
         profileRef.child("location").setValue(editedLocation);
         profileRef.child("university").setValue(editedUniversity);
+
+        profileStorageRef = FirebaseStorage.getInstance().getReference("profile_image/" + userId);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        if (profilePhotoBitmap != null) {
+            profilePhotoBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+            byte[] profileImage = baos.toByteArray();
+            UploadTask uploadImage = profileStorageRef.putBytes(profileImage);
+
+            uploadImage.addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    profileStorageRef.getDownloadUrl().addOnSuccessListener(uri -> {
+                        String imageUrl = uri.toString();
+                        // Save the image URL to Firebase Realtime Database
+                        profileRef.child("profile_photo").setValue(imageUrl);
+                    });
+                } else {
+                    Toast.makeText(getContext(), "Save not successful", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
 
         showReadOnlyViews();
     }
@@ -316,13 +303,14 @@ public class ProfileFragment extends Fragment {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK) {
             Bundle extras = data.getExtras();
-            Bitmap profilePhotoBitmap = (Bitmap) extras.get("data");
+            profilePhotoBitmap = (Bitmap) extras.get("data");
             iv_profile_photo.setImageBitmap(profilePhotoBitmap);
         }
     }
 
     private void setDefaultProfilePicture() {
         iv_profile_photo.setImageResource(R.drawable.ic_profile);
+        profilePhotoBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_profile);
     }
 
     public boolean onBackPressed() {
@@ -368,5 +356,31 @@ public class ProfileFragment extends Fragment {
         activity.finish();
 
         Toast.makeText(getContext(), "Logged out successfully!", Toast.LENGTH_SHORT).show();
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    private class LoadImageTask extends AsyncTask<String, Void, Bitmap> {
+        @Override
+        protected Bitmap doInBackground(String... urls) {
+            String imageUrl = urls[0];
+            try {
+                URL url = new URL(imageUrl);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setDoInput(true);
+                connection.connect();
+                InputStream input = connection.getInputStream();
+                return BitmapFactory.decodeStream(input);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap result) {
+            if (result != null) {
+                iv_profile_photo.setImageBitmap(result);
+            }
+        }
     }
 }
