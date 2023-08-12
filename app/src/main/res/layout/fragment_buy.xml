@@ -6,28 +6,37 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <!-- Add other components like search bar, filters, etc., if needed -->
-    <!-- Loader view -->
-
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/sortDropdownLayout"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        app:endIconMode="dropdown_menu"
-        app:boxBackgroundMode="outline">
+        android:orientation="horizontal">
 
-    <AutoCompleteTextView
-        android:id="@+id/sortDropdown"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Sort By"
-        android:paddingStart="5dp"
-        android:text="All Items"
-        android:inputType="none" />
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/sortDropdownLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            app:endIconMode="dropdown_menu"
+            app:boxBackgroundMode="outline">
 
-</com.google.android.material.textfield.TextInputLayout>
+        <AutoCompleteTextView
+            android:id="@+id/sortDropdown"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="@string/sort_by"
+            android:paddingStart="5dp"
+            android:text="@string/all_items"
+            android:inputType="none" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/searchView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:iconifiedByDefault="false"
+            android:queryHint="Search by product name"/>
+    </LinearLayout>
 
     <ProgressBar
         android:id="@+id/loader"
