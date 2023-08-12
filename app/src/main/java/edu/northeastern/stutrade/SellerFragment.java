@@ -1,9 +1,11 @@
 package edu.northeastern.stutrade;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,6 +36,9 @@ import edu.northeastern.stutrade.Models.ProductViewModel;
 public class SellerFragment extends Fragment {
 
     private Button galleryButton, uploadButton;
+
+    private static final int REQUEST_IMAGE_PICK = 100;
+    private static final int REQUEST_IMAGE_CAPTURE = 101;
     String userName, userId;
     private List<Uri> selectedImageUris = new ArrayList<>();
     private DatabaseReference databaseReference;
@@ -69,13 +74,42 @@ public class SellerFragment extends Fragment {
         return view;
     }
 
+//    private void selectImages() {
+//        Intent intent = new Intent();
+//        intent.setType("image/*");
+//        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true); // Allow selecting multiple images
+//        intent.setAction(Intent.ACTION_GET_CONTENT);
+//        startActivityForResult(intent, 100);
+//    }
+
     private void selectImages() {
-        Intent intent = new Intent();
-        intent.setType("image/*");
-        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true); // Allow selecting multiple images
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(intent, 100);
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Select Image Source");
+        builder.setItems(new CharSequence[]{"Gallery", "Camera"}, (dialog, which) -> {
+            if (which == 0) {
+                selectImagesFromGallery();
+            } else {
+                captureImageFromCamera();
+            }
+        });
+        builder.show();
     }
+    private void selectImagesFromGallery() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        startActivityForResult(intent, REQUEST_IMAGE_PICK);
+    }
+
+    private void captureImageFromCamera() {
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (intent.resolveActivity(getActivity().getPackageManager()) != null) {
+            startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
+        } else {
+            Toast.makeText(getContext(), "Camera not available", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
+
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
