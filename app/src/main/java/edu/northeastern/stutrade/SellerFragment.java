@@ -1,9 +1,13 @@
 package edu.northeastern.stutrade;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -14,6 +18,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -28,6 +33,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -44,6 +50,7 @@ public class SellerFragment extends Fragment {
 
     private Button galleryButton, uploadButton;
     private static final int REQUEST_CAMERA_PERMISSION = 102; // Define your own request code
+    private TextView emptyTextView;
 
     private static final int REQUEST_IMAGE_PICK = 100;
     private static final int REQUEST_IMAGE_CAPTURE = 101;
@@ -55,6 +62,8 @@ public class SellerFragment extends Fragment {
     ProgressDialog progressDialog;
     private Button selectImageButton;
     private LinearLayout imageContainer;
+
+    private Uri currentImageUri;
     private EditText productNameEditText, productDescriptionEditText, productPriceEditText;
 
 
@@ -73,7 +82,6 @@ public class SellerFragment extends Fragment {
         productNameEditText = view.findViewById(R.id.productNameEditText);
         productDescriptionEditText = view.findViewById(R.id.productDescriptionEditText);
         productPriceEditText = view.findViewById(R.id.productPriceEditText);
-
         galleryButton.setOnClickListener(v -> selectImages());
         uploadButton.setOnClickListener(v -> uploadProducts());
 
@@ -118,10 +126,17 @@ public class SellerFragment extends Fragment {
         startActivityForResult(intent, REQUEST_IMAGE_PICK);
     }
 
+    @SuppressLint("QueryPermissionsNeeded")
     private void captureImageFromCamera() {
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (intent.resolveActivity(getActivity().getPackageManager()) != null) {
-            startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Images.Media.TITLE, "New Picture");
+        currentImageUri = requireActivity().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+
+        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, currentImageUri);
+        PackageManager packageManager = requireActivity().getPackageManager();
+        if (cameraIntent.resolveActivity(packageManager) != null) {
+            startActivityForResult(cameraIntent, REQUEST_IMAGE_CAPTURE);
         } else {
             Toast.makeText(getContext(), "Camera not available", Toast.LENGTH_SHORT).show();
         }
@@ -142,11 +157,11 @@ public class SellerFragment extends Fragment {
     }
 
 
-
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 100 && resultCode == getActivity().RESULT_OK && data != null) {
+        imageContainer.setVisibility(View.VISIBLE);
+        if (requestCode == REQUEST_IMAGE_PICK && resultCode == getActivity().RESULT_OK && data != null) {
             if (data.getClipData() != null) {
                 int count = data.getClipData().getItemCount();
                 for (int i = 0; i < count; i++) {
@@ -177,8 +192,33 @@ public class SellerFragment extends Fragment {
                 imageContainer.addView(imageView);
             }
         }
+        else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == getActivity().RESULT_OK && data != null) {
+            Bitmap capturedImage = (Bitmap) data.getExtras().get("data");
+            Uri imageUri = getImageUri(getContext(), capturedImage);
+
+            // Create a new ImageView for the captured image and add it to the container
+            displaySelectedImage(imageUri);
+            selectedImageUris.add(imageUri);
+        }
     }
 
+    private void displaySelectedImage(Uri imageUri) {
+        ImageView imageView = new ImageView(getContext());
+        imageView.setLayoutParams(new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        imageView.setImageURI(imageUri);
+
+        // Add the ImageView to the imageContainer LinearLayout
+        imageContainer.addView(imageView);
+    }
+
+    private Uri getImageUri(Context context, Bitmap imageBitmap) {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+        String path = MediaStore.Images.Media.insertImage(context.getContentResolver(), imageBitmap, "ImageTitle", null);
+        return Uri.parse(path);
+    }
 
     private void uploadProducts() {
         String productName = productNameEditText.getText().toString().trim();
