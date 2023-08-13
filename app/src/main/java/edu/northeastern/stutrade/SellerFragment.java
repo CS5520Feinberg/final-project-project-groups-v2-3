@@ -19,7 +19,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -46,14 +45,12 @@ import java.util.Locale;
 import edu.northeastern.stutrade.Models.Product;
 import edu.northeastern.stutrade.Models.ProductViewModel;
 import android.Manifest;
-import android.content.pm.PackageManager;
 
 
 public class SellerFragment extends Fragment {
 
     private Button galleryButton, uploadButton;
     private static final int REQUEST_CAMERA_PERMISSION = 102; // Define your own request code
-    private TextView emptyTextView;
 
     private static final int REQUEST_IMAGE_PICK = 100;
     private static final int REQUEST_IMAGE_CAPTURE = 101;
@@ -136,7 +133,7 @@ public class SellerFragment extends Fragment {
         currentImageUri = requireActivity().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
 
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, currentImageUri);
+        //cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, currentImageUri);
         PackageManager packageManager = requireActivity().getPackageManager();
         if (cameraIntent.resolveActivity(packageManager) != null) {
             startActivityForResult(cameraIntent, REQUEST_IMAGE_CAPTURE);
@@ -305,6 +302,8 @@ public class SellerFragment extends Fragment {
                     Toast.makeText(getContext(), "Product uploaded successfully", Toast.LENGTH_SHORT).show();
                     progressDialog.dismiss();
                     // Clear the fields
+                    imageContainer.removeAllViews();
+                    selectedImageUris.clear();
                     productNameEditText.setText("");
                     productDescriptionEditText.setText("");
                     productPriceEditText.setText("");
