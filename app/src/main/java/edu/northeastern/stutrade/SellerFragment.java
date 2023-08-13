@@ -205,10 +205,9 @@ public class SellerFragment extends Fragment {
     private void displaySelectedImage(Uri imageUri) {
         ImageView imageView = new ImageView(getContext());
         imageView.setLayoutParams(new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
         imageView.setImageURI(imageUri);
-
         // Add the ImageView to the imageContainer LinearLayout
         imageContainer.addView(imageView);
     }
