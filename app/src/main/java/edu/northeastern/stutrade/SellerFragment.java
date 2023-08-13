@@ -44,6 +44,7 @@ import java.util.Locale;
 
 import edu.northeastern.stutrade.Models.Product;
 import edu.northeastern.stutrade.Models.ProductViewModel;
+
 import android.Manifest;
 
 
@@ -107,7 +108,7 @@ public class SellerFragment extends Fragment {
         }
     }
 
-    private void showImageSourceDialog(){
+    private void showImageSourceDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("Select Image Source");
         // Permission is already granted, proceed with camera operations
@@ -120,6 +121,7 @@ public class SellerFragment extends Fragment {
         });
         builder.show();
     }
+
     private void selectImagesFromGallery() {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
@@ -133,13 +135,9 @@ public class SellerFragment extends Fragment {
         currentImageUri = requireActivity().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
 
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        //cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, currentImageUri);
+        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, currentImageUri);
         PackageManager packageManager = requireActivity().getPackageManager();
-        if (cameraIntent.resolveActivity(packageManager) != null) {
-            startActivityForResult(cameraIntent, REQUEST_IMAGE_CAPTURE);
-        } else {
-            Toast.makeText(getContext(), "Camera not available", Toast.LENGTH_SHORT).show();
-        }
+        startActivityForResult(cameraIntent, REQUEST_IMAGE_CAPTURE);
     }
 
     @Override
@@ -151,7 +149,7 @@ public class SellerFragment extends Fragment {
                 showImageSourceDialog();
             } else {
                 // Permission denied, show a message or handle accordingly
-                Toast.makeText(getContext(),"Camera access denied. Please enable permissions",Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Camera access denied. Please enable permissions", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -178,62 +176,36 @@ public class SellerFragment extends Fragment {
                 // Create a new ImageView for the selected image and add it to the container
                 displaySelectedImage(imageUri);
             }
-        } else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == getActivity().RESULT_OK && data != null) {
-            Bitmap capturedImage = (Bitmap) data.getExtras().get("data");
-            Uri imageUri = getImageUri(getContext(), capturedImage);
-
-            // Create a new ImageView for the captured image and add it to the container
-            displaySelectedImage(imageUri);
-            selectedImageUris.add(imageUri);
+        } else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == getActivity().RESULT_OK && currentImageUri != null) {
+            // Display the captured image directly without resizing
+            displaySelectedImage(currentImageUri);
+            selectedImageUris.add(currentImageUri);
         }
     }
 
     private void displaySelectedImage(Uri imageUri) {
-        // Load and resize the image
-        Bitmap thumbnail = getResizedBitmap(imageUri, 350, 350);
-
-        // Create a new ImageView for the selected image
-        ImageView imageView = new ImageView(getContext());
-        imageView.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.MATCH_PARENT));
-        imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        imageView.setImageBitmap(thumbnail);
-
-        // Add the ImageView to the imageContainer LinearLayout
-        imageContainer.addView(imageView);
-    }
-
-    private Bitmap getResizedBitmap(Uri imageUri, int newWidth, int newHeight) {
+        // Load the original image without resizing
         try {
             InputStream inputStream = getContext().getContentResolver().openInputStream(imageUri);
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inJustDecodeBounds = true;
-            BitmapFactory.decodeStream(inputStream, null, options);
+            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
 
+            // Create a new ImageView for the selected image
+            ImageView imageView = new ImageView(getContext());
+            imageView.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.MATCH_PARENT));
+            imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+            imageView.setImageBitmap(bitmap);
+
+            // Add the ImageView to the imageContainer LinearLayout
+            imageContainer.addView(imageView);
+
+            // Close the input stream
             inputStream.close();
-
-            inputStream = getContext().getContentResolver().openInputStream(imageUri);
-
-            int originalWidth = options.outWidth;
-            int originalHeight = options.outHeight;
-
-            int scaleFactor = Math.min(originalWidth / newWidth, originalHeight / newHeight);
-
-            options.inJustDecodeBounds = false;
-            options.inSampleSize = scaleFactor;
-
-            Bitmap resizedBitmap = BitmapFactory.decodeStream(inputStream, null, options);
-            inputStream.close();
-
-            return resizedBitmap;
         } catch (IOException e) {
             e.printStackTrace();
-            return null;
         }
     }
-
-
 
     private Uri getImageUri(Context context, Bitmap imageBitmap) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
