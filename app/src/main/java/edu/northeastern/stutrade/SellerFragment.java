@@ -48,7 +48,6 @@ import java.util.Locale;
 import edu.northeastern.stutrade.Models.Product;
 import edu.northeastern.stutrade.Models.ProductViewModel;
 import android.Manifest;
-import android.content.pm.PackageManager;
 
 
 public class SellerFragment extends Fragment {
@@ -179,7 +178,7 @@ public class SellerFragment extends Fragment {
                 // Create a new ImageView for the selected image and add it to the container
                 displaySelectedImage(imageUri);
             }
-        } else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == getActivity().RESULT_OK && data != null) {
+        } else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == getActivity().RESULT_OK) {
             //Bitmap capturedImage = (Bitmap) data.getExtras().get("data");
             Bitmap capturedImage = getBitmapFromUri(currentImageUri);
             if(capturedImage!=null) {
@@ -359,6 +358,8 @@ public class SellerFragment extends Fragment {
                     Toast.makeText(getContext(), "Product uploaded successfully", Toast.LENGTH_SHORT).show();
                     progressDialog.dismiss();
                     // Clear the fields
+                    imageContainer.removeAllViews();
+                    selectedImageUris.clear();
                     productNameEditText.setText("");
                     productDescriptionEditText.setText("");
                     productPriceEditText.setText("");
