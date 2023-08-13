@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -34,6 +35,8 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -169,30 +172,16 @@ public class SellerFragment extends Fragment {
                     selectedImageUris.add(imageUri);
 
                     // Create a new ImageView for each selected image and add it to the container
-                    ImageView imageView = new ImageView(getContext());
-                    imageView.setLayoutParams(new ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT));
-                    imageView.setImageURI(imageUri);
-
-                    // Add the ImageView to the imageContainer LinearLayout
-                    imageContainer.addView(imageView);
+                    displaySelectedImage(imageUri);
                 }
             } else if (data.getData() != null) {
                 Uri imageUri = data.getData();
                 selectedImageUris.add(imageUri);
 
                 // Create a new ImageView for the selected image and add it to the container
-                ImageView imageView = new ImageView(getContext());
-                imageView.setLayoutParams(new ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT));
-                imageView.setImageURI(imageUri);
-                // Add the ImageView to the imageContainer LinearLayout
-                imageContainer.addView(imageView);
+                displaySelectedImage(imageUri);
             }
-        }
-        else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == getActivity().RESULT_OK && data != null) {
+        } else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == getActivity().RESULT_OK && data != null) {
             Bitmap capturedImage = (Bitmap) data.getExtras().get("data");
             Uri imageUri = getImageUri(getContext(), capturedImage);
 
@@ -203,14 +192,51 @@ public class SellerFragment extends Fragment {
     }
 
     private void displaySelectedImage(Uri imageUri) {
+        // Load and resize the image
+        Bitmap thumbnail = getResizedBitmap(imageUri, 350, 350);
+
+        // Create a new ImageView for the selected image
         ImageView imageView = new ImageView(getContext());
-        imageView.setLayoutParams(new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-        imageView.setImageURI(imageUri);
+        imageView.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.MATCH_PARENT));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        imageView.setImageBitmap(thumbnail);
+
         // Add the ImageView to the imageContainer LinearLayout
         imageContainer.addView(imageView);
     }
+
+    private Bitmap getResizedBitmap(Uri imageUri, int newWidth, int newHeight) {
+        try {
+            InputStream inputStream = getContext().getContentResolver().openInputStream(imageUri);
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(inputStream, null, options);
+
+            inputStream.close();
+
+            inputStream = getContext().getContentResolver().openInputStream(imageUri);
+
+            int originalWidth = options.outWidth;
+            int originalHeight = options.outHeight;
+
+            int scaleFactor = Math.min(originalWidth / newWidth, originalHeight / newHeight);
+
+            options.inJustDecodeBounds = false;
+            options.inSampleSize = scaleFactor;
+
+            Bitmap resizedBitmap = BitmapFactory.decodeStream(inputStream, null, options);
+            inputStream.close();
+
+            return resizedBitmap;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
 
     private Uri getImageUri(Context context, Bitmap imageBitmap) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
