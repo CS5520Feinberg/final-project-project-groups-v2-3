@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
@@ -12,6 +13,8 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -42,6 +45,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 import edu.northeastern.stutrade.Models.ProductViewModel;
+import android.Manifest;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -60,13 +64,14 @@ public class ProfileFragment extends Fragment {
     private TextView tv_username, tv_email, tv_bio, tv_location, tv_university;
     private EditText et_username, et_bio, et_location, et_university;
     private Button btn_edit, btn_save, btn_cancel, btn_logout;
-    private static final int REQUEST_IMAGE_CAPTURE = 1;
     private Bitmap originalProfilePhotoBitmap;
     private static String userId;
     DatabaseReference profileRef;
     private FirebaseAuth firebaseAuth;
     private StorageReference profileStorageRef;
     Bitmap profilePhotoBitmap;
+    private static final int REQUEST_IMAGE_CAPTURE = 1;
+    private static final int CAMERA_PERMISSION_REQUEST_CODE = 2;
 
     public ProfileFragment() {
         // Required empty public constructor
@@ -292,9 +297,38 @@ public class ProfileFragment extends Fragment {
     }
 
     private void dispatchTakePictureIntent() {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            // Camera permission granted, start the camera intent
+            startCameraIntent();
+        } else {
+            // Request camera permission
+            requestCameraPermission();
+        }
+    }
+
+    private void startCameraIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (takePictureIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+        if (takePictureIntent.resolveActivity(requireActivity().getPackageManager()) != null) {
             startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+        }
+    }
+
+    private void requestCameraPermission() {
+        // Request camera permission
+        ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Camera permission granted, start the camera intent
+                startCameraIntent();
+            } else {
+                Toast.makeText(getContext(), "Camera not available", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
