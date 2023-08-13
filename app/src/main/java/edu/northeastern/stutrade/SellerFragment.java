@@ -3,6 +3,7 @@ package edu.northeastern.stutrade;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -15,7 +16,10 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -32,10 +36,14 @@ import java.util.Locale;
 
 import edu.northeastern.stutrade.Models.Product;
 import edu.northeastern.stutrade.Models.ProductViewModel;
+import android.Manifest;
+import android.content.pm.PackageManager;
+
 
 public class SellerFragment extends Fragment {
 
     private Button galleryButton, uploadButton;
+    private static final int REQUEST_CAMERA_PERMISSION = 102; // Define your own request code
 
     private static final int REQUEST_IMAGE_PICK = 100;
     private static final int REQUEST_IMAGE_CAPTURE = 101;
@@ -83,8 +91,18 @@ public class SellerFragment extends Fragment {
 //    }
 
     private void selectImages() {
+
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
+        } else {
+            showImageSourceDialog();
+        }
+    }
+
+    private void showImageSourceDialog(){
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("Select Image Source");
+        // Permission is already granted, proceed with camera operations
         builder.setItems(new CharSequence[]{"Gallery", "Camera"}, (dialog, which) -> {
             if (which == 0) {
                 selectImagesFromGallery();
@@ -109,6 +127,19 @@ public class SellerFragment extends Fragment {
         }
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CAMERA_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, proceed with camera operations
+                showImageSourceDialog();
+            } else {
+                // Permission denied, show a message or handle accordingly
+                Toast.makeText(getContext(),"Camera access denied. Please enable permissions",Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 
 
 
