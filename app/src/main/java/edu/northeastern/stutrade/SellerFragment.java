@@ -183,7 +183,7 @@ public class SellerFragment extends Fragment {
         }
     }
 
-    private void displaySelectedImage(Uri imageUri) {
+    /* private void displaySelectedImage(Uri imageUri) {
         // Load the original image without resizing
         try {
             InputStream inputStream = getContext().getContentResolver().openInputStream(imageUri);
@@ -204,6 +204,51 @@ public class SellerFragment extends Fragment {
             inputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }*/
+
+    private void displaySelectedImage(Uri imageUri) {
+        // Load and resize the image
+        Bitmap thumbnail = getResizedBitmap(imageUri, 350, 350);
+
+        // Create a new ImageView for the selected image
+        ImageView imageView = new ImageView(getContext());
+        imageView.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.MATCH_PARENT));
+        imageView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        imageView.setImageBitmap(thumbnail);
+
+        // Add the ImageView to the imageContainer LinearLayout
+        imageContainer.addView(imageView);
+    }
+
+    private Bitmap getResizedBitmap(Uri imageUri, int newWidth, int newHeight) {
+        try {
+            InputStream inputStream = getContext().getContentResolver().openInputStream(imageUri);
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(inputStream, null, options);
+
+            inputStream.close();
+
+            inputStream = getContext().getContentResolver().openInputStream(imageUri);
+
+            int originalWidth = options.outWidth;
+            int originalHeight = options.outHeight;
+
+            int scaleFactor = Math.min(originalWidth / newWidth, originalHeight / newHeight);
+
+            options.inJustDecodeBounds = false;
+            options.inSampleSize = scaleFactor;
+
+            Bitmap resizedBitmap = BitmapFactory.decodeStream(inputStream, null, options);
+            inputStream.close();
+
+            return resizedBitmap;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 
