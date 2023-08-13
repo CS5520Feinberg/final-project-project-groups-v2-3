@@ -8,7 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -16,6 +15,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.storage.FirebaseStorage;
@@ -25,6 +26,7 @@ import com.squareup.picasso.Picasso;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -94,31 +96,37 @@ public class ProductViewFragment extends Fragment {
     private void showImagePopup() {
         Dialog imagePopup = new Dialog(requireContext());
         imagePopup.setContentView(R.layout.layout_popup_image);
-        LinearLayout imageContainer = imagePopup.findViewById(R.id.imageContainer);
+        RecyclerView imageRecyclerView = imagePopup.findViewById(R.id.imageRecyclerView);
+
+        LinearLayoutManager layoutManager = new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false);
+        imageRecyclerView.setLayoutManager(layoutManager);
+
+        ImageAdapter imageAdapter = new ImageAdapter(new ArrayList<>());
+        imageRecyclerView.setAdapter(imageAdapter);
 
         storageReference.listAll()
                 .addOnSuccessListener(listResult -> {
                     List<StorageReference> items = listResult.getItems();
+                    List<String> imageUrls = new ArrayList<>();
 
                     for (StorageReference item : items) {
                         item.getDownloadUrl().addOnSuccessListener(uri -> {
                             String imageUrl = uri.toString();
-                            // Load the image into the ImageView using Picasso
-                            ImageView imageView = new ImageView(requireContext());
-                            imageView.setLayoutParams(new LinearLayout.LayoutParams(
-                                    LinearLayout.LayoutParams.MATCH_PARENT,
-                                    LinearLayout.LayoutParams.WRAP_CONTENT
-                            ));
-                            Picasso.get().load(imageUrl).into(imageView);
-                            imageContainer.addView(imageView);
+                            if (!imageUrl.isEmpty()) {
+                                imageUrls.add(imageUrl);
+                            }
+
+                            imageAdapter.setImageUrls(imageUrls);
                         });
                     }
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(getContext(), "Unable to load images", Toast.LENGTH_SHORT).show();
                 });
+
         imagePopup.show();
     }
+
 
     private void openChatFragment() {
         // Create a new instance of ChatFragment with the required arguments
@@ -127,7 +135,6 @@ public class ProductViewFragment extends Fragment {
         BottomNavigationView bottomNavigationView = getActivity().findViewById(R.id.bottom_navigation_view);
         MenuItem chatMenuItem = bottomNavigationView.getMenu().findItem(R.id.navigation_chat);
         chatMenuItem.setChecked(true);
-        // Perform fragment transaction to open ChatFragment
         requireActivity().getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_layout, chatFragment)
                 .addToBackStack(null)
@@ -139,7 +146,7 @@ public class ProductViewFragment extends Fragment {
         try {
             return LocalDate.parse(datePosted, formatter);
         } catch (DateTimeParseException e) {
-            return LocalDate.now(); // Return current date if parsing fails
+            return LocalDate.now();
         }
     }
 

@@ -1,18 +1,14 @@
-<!-- res/layout/layout_popup_image.xml -->
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/imageContainer"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
 
-    <LinearLayout
-        android:id="@+id/imageContainer"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/imageRecyclerView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="16dp"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"/>
 
-        <!-- Add ImageViews here dynamically using code -->
+    <!-- Other Views -->
 
-    </LinearLayout>
-
-</ScrollView>
+</LinearLayout>

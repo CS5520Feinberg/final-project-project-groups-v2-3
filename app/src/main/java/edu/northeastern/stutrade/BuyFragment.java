@@ -139,6 +139,7 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
                 List<Product> productList = new ArrayList<>();
                 for (DataSnapshot productSnapshot : dataSnapshot.getChildren()) {
                     Product product = productSnapshot.getValue(Product.class);
+
                     productList.add(product);
                     originalProductList.add(product);
                 }
