@@ -20,4 +20,11 @@
     <string name="select_user">Select User</string>
     <string name="sort_by">Sort By</string>
     <string name="all_items">All Items</string>
+    <string name="logo">Logo</string>
+    <string name="enter_email">Enter Email</string>
+    <string name="enter_password">Enter Password</string>
+    <string name="login">Login</string>
+    <string name="signup">Signup</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="enter_name">Enter Name</string>
 </resources>

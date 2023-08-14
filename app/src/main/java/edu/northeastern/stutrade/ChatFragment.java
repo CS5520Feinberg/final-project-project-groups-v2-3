@@ -61,7 +61,6 @@ public class ChatFragment extends Fragment {
 
     AutoCompleteTextView sortDropdown;
     TextInputLayout sortDropdownLayout;
-    private ProductViewModel productViewModel;
 
     public ChatFragment() {
         // Required empty public constructor
@@ -95,7 +94,7 @@ public class ChatFragment extends Fragment {
             userId = email.substring(0, email.indexOf("@"));
         }
 
-        productViewModel = new ViewModelProvider(requireActivity()).get(ProductViewModel.class);
+        ProductViewModel productViewModel = new ViewModelProvider(requireActivity()).get(ProductViewModel.class);
         productViewModel.setCurrentFragment("chat_fragment");
     }
 
@@ -146,19 +145,23 @@ public class ChatFragment extends Fragment {
         }
 
         btn_chat.setOnClickListener(v -> {
-            rv_chat.setVisibility(View.VISIBLE);
-            tv_chat_with.setVisibility(View.VISIBLE);
-            et_message.setVisibility(View.VISIBLE);
-            btn_send.setVisibility(View.VISIBLE);
+            if (selectedUser != null) {
+                rv_chat.setVisibility(View.VISIBLE);
+                tv_chat_with.setVisibility(View.VISIBLE);
+                et_message.setVisibility(View.VISIBLE);
+                btn_send.setVisibility(View.VISIBLE);
 
-            sortDropdown.setVisibility(View.GONE);
-            sortDropdownLayout.setVisibility(View.GONE);
-            btn_chat.setVisibility(View.GONE);
+                sortDropdown.setVisibility(View.GONE);
+                sortDropdownLayout.setVisibility(View.GONE);
+                btn_chat.setVisibility(View.GONE);
 
-            selectedUsername = selectedUser.substring(0, selectedUser.indexOf("(")).trim();
-            selectedUserID = selectedUser.substring(selectedUser.indexOf("(") + 1, selectedUser.indexOf(")")).trim();
-            tv_chat_with.setText(selectedUsername);
-            displayUserChat(selectedUserID, view);
+                selectedUsername = selectedUser.substring(0, selectedUser.indexOf("(")).trim();
+                selectedUserID = selectedUser.substring(selectedUser.indexOf("(") + 1, selectedUser.indexOf(")")).trim();
+                tv_chat_with.setText(selectedUsername);
+                displayUserChat(selectedUserID, view);
+            } else {
+                Toast.makeText(getContext(), "Please select the user.", Toast.LENGTH_SHORT).show();
+            }
         });
 
         // Handle click events for the send button

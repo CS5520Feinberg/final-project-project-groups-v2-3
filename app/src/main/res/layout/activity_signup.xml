@@ -17,35 +17,32 @@
             android:layout_height="100dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="24dp"
-            android:contentDescription="Logo"
+            android:contentDescription="@string/logo"
             android:src="@drawable/stutrade_round" />
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/name_et"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Enter Name"
-            android:textColor="#0196A3"
-            android:textColorHint="@android:color/white"
+            android:hint="@string/enter_name"
+            android:textColor="#012169"
             android:layout_marginTop="24dp" />
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/email_et"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Enter Email"
-            android:textColor="#0196A3"
-            android:textColorHint="@android:color/white"
+            android:hint="@string/enter_email"
+            android:textColor="#012169"
             android:layout_marginTop="24dp" />
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/password_et"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Enter password"
-            android:textColor="#0196A3"
+            android:hint="@string/enter_password"
+            android:textColor="#012169"
             android:inputType="textPassword"
-            android:textColorHint="@android:color/white"
             android:layout_marginTop="24dp" />
 
         <!-- Signup button -->
@@ -53,9 +50,8 @@
             android:id="@+id/btnSignup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:backgroundTint="@color/colorAccent"
-            android:text="Sign Up"
-            android:textColor="@android:color/black"
+            android:backgroundTint="#012169"
+            android:text="@string/sign_up"
             android:layout_marginTop="24dp" />
 
     </LinearLayout>
