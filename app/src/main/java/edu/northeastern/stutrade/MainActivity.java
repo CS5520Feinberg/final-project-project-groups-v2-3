@@ -3,7 +3,9 @@ package edu.northeastern.stutrade;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
@@ -14,12 +16,14 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.media.RingtoneManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -40,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String MESSAGE_TO_USER = "message_to_user";
     TextView username_tv;
     String username;
-    private ProductViewModel productViewModel;
+    private static final int PERMISSION_REQUEST_CODE = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,7 +113,15 @@ public class MainActivity extends AppCompatActivity {
                 }
         );
 
-        createNotificationChannel();
+        String permission = android.Manifest.permission.POST_NOTIFICATIONS;
+        if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
+            // Permission is already granted
+            createNotificationChannel();
+        } else {
+            // Permission is not granted, request it
+            ActivityCompat.requestPermissions(this, new String[]{permission}, PERMISSION_REQUEST_CODE);
+        }
+
         String userId = email.substring(0, email.indexOf("@"));
         DatabaseReference chatReference = FirebaseDatabase.getInstance().getReference().child("chats").child(userId);
         chatReference.addValueEventListener(new ValueEventListener() {
@@ -175,6 +187,20 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         getOnBackPressedDispatcher().addCallback(this, onBackPressedCallback);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted
+                Toast.makeText(this, "Permission granted", Toast.LENGTH_SHORT).show();
+            } else {
+                // Permission denied
+                Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     private void showExitConfirmationDialog() {
