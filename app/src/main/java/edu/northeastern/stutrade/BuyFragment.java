@@ -1,6 +1,8 @@
 package edu.northeastern.stutrade;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +19,7 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -30,6 +33,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.stream.Collectors;
 
 import edu.northeastern.stutrade.Models.Product;
 import edu.northeastern.stutrade.Models.ProductViewModel;
@@ -39,6 +45,11 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
     private ProgressBar loader;
     private ProductAdapter productAdapter;
     private ProductViewModel productViewModel;
+    private int currentPage = 0;
+    private final long DELAY_MS = 3000; // Delay in milliseconds before auto-scrolling
+    private final long PERIOD_MS = 5000; // Interval in milliseconds between auto-scrolls
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private Timer timer;
     private final List<Product> originalProductList = new ArrayList<>();
     private String[] sortingOptions = {
             "Price Increasing",
@@ -48,6 +59,8 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
     };
 
     private String selectedSortingOption="";
+    private ViewPager2 productViewPager;
+    private ProductCarouselAdapter productCarouselAdapter = new ProductCarouselAdapter(new ArrayList<>());
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -61,6 +74,7 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
         productsRecyclerView = rootView.findViewById(R.id.productRecyclerView);
         loader = rootView.findViewById(R.id.loader);
         SearchView searchView = rootView.findViewById(R.id.searchView);
+        productViewPager = rootView.findViewById(R.id.productViewPager);
 
         if (savedInstanceState != null && savedInstanceState.containsKey("product_list")) {
             List<Product> savedProductList = (ArrayList<Product>) savedInstanceState.getSerializable("product_list");
@@ -73,6 +87,7 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
             }
         }else{
             productsRecyclerView();
+            //productsRecyclerView1();
             sortDropdown(rootView);
         }
 
@@ -97,9 +112,30 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
                 return true;
             }
         });
+        startAutoScroll();
 
         return rootView;
     }
+
+    private void startAutoScroll() {
+        // Initialize the Timer and TimerTask
+        timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                handler.post(() -> {
+                    if (currentPage == 5) {
+                        currentPage = 0;
+                    } else {
+                        currentPage++;
+                    }
+                    productViewPager.setCurrentItem(currentPage);
+                });
+            }
+        }, DELAY_MS, PERIOD_MS);
+    }
+
+
 
     private void filterProducts(String query) {
         if (query.isEmpty()) {
@@ -144,11 +180,22 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
                     originalProductList.add(product);
                 }
 
-                // Create and set up the RecyclerView with the fetched data
-                productsRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(),2));
+                // Set up the RecyclerView with the fetched data
+                productsRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 2));
                 productAdapter = new ProductAdapter(productList);
-                productAdapter.setOnProductClickListener((ProductAdapter.OnProductClickListener) BuyFragment.this);
+                productAdapter.setOnProductClickListener(BuyFragment.this);
                 productsRecyclerView.setAdapter(productAdapter);
+                List<Product> carouselProductList =productList;
+                Collections.sort(carouselProductList, (product1, product2) -> {
+                    Date date1 = product1.getDatePostedAsDate();
+                    Date date2 = product2.getDatePostedAsDate();
+                    return date1 != null && date2 != null ? date2.compareTo(date1) : 0;
+                });
+                carouselProductList = carouselProductList.stream().limit(5).collect(Collectors.toList());
+                productCarouselAdapter = new ProductCarouselAdapter(productList);
+                productCarouselAdapter.setProductList(carouselProductList);
+                productViewPager.setAdapter(productCarouselAdapter);
+                productCarouselAdapter.setOnProductClickListener(BuyFragment.this);
 
                 loader.setVisibility(View.GONE);
             }
@@ -224,6 +271,10 @@ public class BuyFragment extends Fragment implements ProductAdapter.OnProductCli
     @Override
     public void onDestroy() {
         super.onDestroy();
+        if (timer != null) {
+            timer.cancel();
+            timer = null;
+        }
         productViewModel.setIsProductSelected(false);
     }
 }
