@@ -5,7 +5,7 @@
         <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
 
         <!-- Sleek stylish -->
-        <item name="colorPrimary">#03A9F4</item>
+        <item name="colorPrimary">#7F7FD5</item>
         <item name="colorPrimaryDark">#E91E63</item>
         <item name="colorAccent">#FF5722</item>
         <item name="android:windowBackground">@color/black</item>
